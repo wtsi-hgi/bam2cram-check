@@ -214,15 +214,17 @@ class TestGetCHK(unittest.TestCase):
         actual_result = get_chk_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
+
 class TestCheckPathWritable(unittest.TestCase):
 
-    @mock.path('os')
-    @mock.path('os.path')
-    def test_check_path_writable_1(self, mock_path, mock_os):
+    @mock.patch('os.path')
+    @mock.patch('os')
+    def test_check_path_writable_1(self, mock_os, mock_path):
+        mock_path.isdir.return_value = False
         mock_path.exists.return_value = False
+        mock_path.dirname.return_value = 'some_dir'
+        mock_os.access.return_value = False
         self.assertFalse(check_path_writable('some_path'))
-        # dir_path = os.getcwd()
-        # self.assertTrue(check_path_writable(os.path.join(dir_path, 'test')))
 
 # def check_path_writable(fpath):
 #     if os.path.isdir(fpath):
