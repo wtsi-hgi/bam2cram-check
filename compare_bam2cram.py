@@ -138,7 +138,7 @@ def check_path_writable(fpath):
             parent_dir = os.path.dirname(fpath)
             if os.access(parent_dir, os.W_OK):
                 return True
-            return Flase
+            return False
 
 
 
@@ -218,13 +218,55 @@ class TestGetCHK(unittest.TestCase):
 class TestCheckPathWritable(unittest.TestCase):
 
     @mock.patch('os.path')
-    @mock.patch('os')
-    def test_check_path_writable_1(self, mock_os, mock_path):
+    @mock.patch('os.access')
+    def test_check_path_writable_1(self, mock_access, mock_path):
         mock_path.isdir.return_value = False
         mock_path.exists.return_value = False
         mock_path.dirname.return_value = 'some_dir'
-        mock_os.access.return_value = False
+        mock_access.return_value = False
         self.assertFalse(check_path_writable('some_path'))
+
+    @mock.patch('os.path')
+    @mock.patch('os.access')
+    def test_check_path_writable_2(self, mock_access, mock_path):
+        mock_path.isdir.return_value = False
+        mock_path.exists.return_value = False
+        mock_path.dirname.return_value = 'some_dir'
+        mock_access.return_value = True
+        self.assertTrue(check_path_writable('some_path'))
+
+    @mock.patch('os.path')
+    @mock.patch('os.access')
+    def test_check_path_writable_3(self, mock_access, mock_path):
+        mock_path.isdir.return_value = False
+        mock_path.exists.return_value = True
+        mock_path.dirname.return_value = 'some_dir'
+        mock_access.return_value = False
+        self.assertFalse(check_path_writable('some_path'))
+
+    @mock.patch('os.path')
+    @mock.patch('os.access')
+    def test_check_path_writable_4(self, mock_access, mock_path):
+        mock_path.isdir.return_value = False
+        mock_path.exists.return_value = True
+        mock_path.dirname.return_value = 'some_dir'
+        mock_access.return_value = True
+        self.assertTrue(check_path_writable('some_path'))
+
+    @mock.patch('os.path')
+    @mock.patch('os.access')
+    def test_check_path_writable_5(self, mock_access, mock_path):
+        mock_path.isdir.return_value = True
+        mock_access.return_value = False
+        self.assertFalse(check_path_writable('some_path'))
+
+    @mock.patch('os.path')
+    @mock.patch('os.access')
+    def test_check_path_writable_6(self, mock_access, mock_path):
+        mock_path.isdir.return_value = True
+        mock_access.return_value = True
+        self.assertTrue(check_path_writable('some_path'))
+
 
 # def check_path_writable(fpath):
 #     if os.path.isdir(fpath):
