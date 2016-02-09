@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 09, 2016.
 """
 import logging
+import os
 
 def log_error(cmd_str, stderr, exit_code):
     if stderr:
