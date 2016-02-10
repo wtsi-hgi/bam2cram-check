@@ -20,7 +20,7 @@ This file has been created on Feb 09, 2016.
 """
 
 import unittest
-
+import mock
 from checks import stats_checks
 
 
@@ -51,3 +51,13 @@ class TestHandleSamtoolsStats(unittest.TestCase):
         actual_result = stats_checks.HandleSamtoolsStats.get_chk_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
+
+class TestGetCHK(unittest.TestCase):
+
+
+    @mock.patch('checks.stats_checks.RunSamtoolsComands.get_samtools_flagstat_output')
+    def test_compare_flagstats(self, mock_flagst):
+        flagstat1 = "268505766 + 0 in total (QC-passed reads + QC-failed reads)\n0 + 0 secondary\n0 + 0 supplementary\n30981933 + 0 duplicates\n266920133 + 0 mapped (99.41% : N/A)\n268505766 + 0 paired in sequencing\n134252883 + 0 read1\n134252883 + 0 read2\n261775882 + 0 properly paired (97.49% : N/A)\n265641920 + 0 with itself and mate mapped\n1278213 + 0 singletons (0.48% : N/A)\n557330 + 0 with mate mapped to a different chr\n440283 + 0 with mate mapped to a different chr (mapQ>=5)\n"
+        #flagstat2 = ""
+        mock_flagst.side_effect = [flagstat1, flagstat1]
+        self.assertListEqual([], stats_checks.CompareStatsForFiles.compare_flagstats('blah1', "blah2"))
