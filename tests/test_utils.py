@@ -20,8 +20,10 @@ This file has been created on Feb 09, 2016.
 """
 
 import unittest
+
 import mock
-import utils
+from checks import utils
+
 
 class TestCheckPathWritable(unittest.TestCase):
 

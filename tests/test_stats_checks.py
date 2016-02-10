@@ -20,9 +20,9 @@ This file has been created on Feb 09, 2016.
 """
 
 import unittest
-import mock
 
-import stats_checks
+from checks import stats_checks
+
 
 class TestHandleSamtoolsStats(unittest.TestCase):
 
