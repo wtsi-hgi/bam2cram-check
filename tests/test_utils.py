@@ -24,11 +24,10 @@ import mock
 
 from checks import utils
 
-
+@mock.patch('checks.utils.os.path')
+@mock.patch('checks.utils.os.access')
 class TestCheckPathWritable(unittest.TestCase):
 
-    @mock.patch('checks.utils.os.path')
-    @mock.patch('checks.utils.os.access')
     def test_check_path_writable_1(self, mock_access, mock_path):
         mock_path.isdir.return_value = False
         mock_path.exists.return_value = False
@@ -36,8 +35,6 @@ class TestCheckPathWritable(unittest.TestCase):
         mock_access.return_value = False
         self.assertFalse(utils.check_path_writable('some_path'))
 
-    @mock.patch('checks.utils.os.path')
-    @mock.patch('checks.utils.os.access')
     def test_check_path_writable_2(self, mock_access, mock_path):
         mock_path.isdir.return_value = False
         mock_path.exists.return_value = False
@@ -45,8 +42,6 @@ class TestCheckPathWritable(unittest.TestCase):
         mock_access.return_value = True
         self.assertTrue(utils.check_path_writable('some_path'))
 
-    @mock.patch('checks.utils.os.path')
-    @mock.patch('checks.utils.os.access')
     def test_check_path_writable_3(self, mock_access, mock_path):
         mock_path.isdir.return_value = False
         mock_path.exists.return_value = True
@@ -54,8 +49,6 @@ class TestCheckPathWritable(unittest.TestCase):
         mock_access.return_value = False
         self.assertFalse(utils.check_path_writable('some_path'))
 
-    @mock.patch('checks.utils.os.path')
-    @mock.patch('checks.utils.os.access')
     def test_check_path_writable_4(self, mock_access, mock_path):
         mock_path.isdir.return_value = False
         mock_path.exists.return_value = True
@@ -63,16 +56,71 @@ class TestCheckPathWritable(unittest.TestCase):
         mock_access.return_value = True
         self.assertTrue(utils.check_path_writable('some_path'))
 
-    @mock.patch('checks.utils.os.path')
-    @mock.patch('checks.utils.os.access')
     def test_check_path_writable_5(self, mock_access, mock_path):
         mock_path.isdir.return_value = True
         mock_access.return_value = False
         self.assertFalse(utils.check_path_writable('some_path'))
 
-    @mock.patch('checks.utils.os.path')
-    @mock.patch('checks.utils.os.access')
     def test_check_path_writable_6(self, mock_access, mock_path):
         mock_path.isdir.return_value = True
         mock_access.return_value = True
         self.assertTrue(utils.check_path_writable('some_path'))
+
+
+class TestIO(unittest.TestCase):
+
+    @mock.patch('checks.utils.open')
+    def test_read_from_file(self, mock_open):
+        utils.read_from_file('blah')
+        mock_open.assert_called_once_with('blah')
+
+    def test_write_from_file(self):
+        with mock.patch('checks.utils.open') as mock_open:
+            utils.write_to_file('blah', 'some_text')
+            mock_open.assert_called_once_with('blah', 'w')
+
+    def test_logging_1(self):
+        with mock.patch('checks.utils.logging.info') as mock_logging:
+            utils.log_error('samtools quickcheck', None, 0)
+            mock_logging.assert_called_once_with('Ran successfully samtools quickcheck')
+
+    def test_logging_2(self):
+        with mock.patch('checks.utils.logging.error') as mock_logging:
+            utils.log_error('samtools quickcheck', None, 1)
+            mock_logging.assert_called_once_with('samtools quickcheck had no error, but exit code is non zero: 1')
+
+    def test_logging_3(self):
+        with mock.patch('checks.utils.logging.error') as mock_logging:
+            utils.log_error('samtools quickcheck', "error", 1)
+            mock_logging.assert_called_once_with('samtools quickcheck exited with code: 1 and threw an error: error ')
+
+    def test_logging_4(self):
+        with mock.patch('checks.utils.logging.error') as mock_logging:
+            utils.log_error('samtools quickcheck', "error", 0)
+            mock_logging.assert_called_once_with('samtools quickcheck had exit status 0, but threw an error: error ')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
