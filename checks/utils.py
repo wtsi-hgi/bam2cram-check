@@ -34,14 +34,13 @@ def log_error(cmd_str, stderr, exit_code):
 
 
 def read_from_file(fpath):
-    with open(fpath) as myfile:
-        return myfile.read()
+    with open(fpath) as f:
+        return f.read()
 
 
 def write_to_file(fpath, text):
-    f = open(fpath, 'w')
-    f.write(text)
-    f.close()
+    with open(fpath, 'w') as f:
+        f.write(text)
 
 
 def check_path_writable(fpath):
