@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 This file has been created on Feb 10, 2016.
 """
-
+import os
 import argparse
 import logging
 from checks.stats_checks import RunSamtoolsComands, CompareStatsForFiles
