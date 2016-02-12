@@ -23,6 +23,71 @@ import unittest
 import mock
 from checks import stats_checks
 
+# class RunSamtoolsComands:
+#     @classmethod
+#     def _run_subprocess(cls, args_list):
+#         proc = subprocess.run(args_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+#         utils.log_error(args_list, proc.stderr, proc.returncode)
+#         return proc.stdout
+#
+#     @classmethod
+#     def run_samtools_quickcheck(cls, fpath):
+#         return cls._run_subprocess(['samtools', 'quickcheck', '-v', fpath])
+#
+#     @classmethod
+#     def get_samtools_flagstat_output(cls, fpath):
+#         return cls._run_subprocess(['samtools', 'flagstat', fpath])
+#
+#     @classmethod
+#     def get_samtools_stats_output(cls, fpath):
+#         return cls._run_subprocess(['samtools', 'stats', fpath])
+#
+
+
+import subprocess
+from collections import namedtuple
+class TestRunSamtoolsCommands(unittest.TestCase):
+
+    @mock.patch('checks.stats_checks.subprocess.run')
+    def test_run_subprocess_1(self, mock_subproc):
+        some_obj = namedtuple('some_obj', ['stdout', 'stderr', 'returncode'])
+        mock_subproc.return_value = some_obj(stdout='OK', stderr=None, returncode=0)
+        result = stats_checks.RunSamtoolsCommands._run_subprocess(['samtools', 'quickcheck', 'mybam'])
+        self.assertEqual(result, 'OK')
+        mock_subproc.assert_called_with(['samtools', 'quickcheck', 'mybam'], stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
+
+    @mock.patch('checks.stats_checks.subprocess.run')
+    @mock.patch('checks.stats_checks.utils.log_error')
+    def test_run_subprocess_2(self, mock_log_error, mock_run):
+        some_obj = namedtuple('some_obj', ['stdout', 'stderr', 'returncode'])
+        mock_run.return_value = some_obj(stdout='OK', stderr=None, returncode=0)
+        stats_checks.RunSamtoolsCommands._run_subprocess(['samtools', 'quickcheck', 'mybam'])
+        mock_log_error.assert_called_with(['samtools', 'quickcheck', 'mybam'], None, 0)
+
+
+    @mock.patch('checks.stats_checks.subprocess.run')
+    @mock.patch('checks.stats_checks.utils.log_error')
+    def test_run_subprocess_3(self, mock_log_error, mock_run):
+        some_obj = namedtuple('some_obj', ['stdout', 'stderr', 'returncode'])
+        mock_run.return_value = some_obj(stdout='ERROR reading', stderr=None, returncode=1)
+        stats_checks.RunSamtoolsCommands._run_subprocess(['samtools', 'quickcheck', 'mybam'])
+        mock_log_error.assert_called_with(['samtools', 'quickcheck', 'mybam'], None, 1)
+
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.run_samtools_quickcheck')
+    def test_run_samtools_quickcheck_1(self, mock_subproc):
+        stats_checks.RunSamtoolsCommands.run_samtools_quickcheck('some_path')
+        mock_subproc.assert_called_with('some_path')
+
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_flagstat_output')
+    def test_get_samtools_flagstat_output_1(self, mock_subproc):
+        stats_checks.RunSamtoolsCommands.get_samtools_flagstat_output('some_path')
+        mock_subproc.assert_called_with('some_path')
+
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_stats_output')
+    def test_get_samtools_stats_output_1(self, mock_subproc):
+        stats_checks.RunSamtoolsCommands.get_samtools_stats_output('some_path')
+        mock_subproc.assert_called_with('some_path')
+
 
 class TestHandleSamtoolsStats(unittest.TestCase):
 
@@ -55,7 +120,7 @@ class TestHandleSamtoolsStats(unittest.TestCase):
 class TestGetCHK(unittest.TestCase):
 
 
-    @mock.patch('checks.stats_checks.RunSamtoolsComands.get_samtools_flagstat_output')
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_flagstat_output')
     def test_compare_flagstats(self, mock_flagst):
         flagstat1 = "268505766 + 0 in total (QC-passed reads + QC-failed reads)\n0 + 0 secondary\n0 + 0 supplementary\n30981933 + 0 duplicates\n266920133 + 0 mapped (99.41% : N/A)\n268505766 + 0 paired in sequencing\n134252883 + 0 read1\n134252883 + 0 read2\n261775882 + 0 properly paired (97.49% : N/A)\n265641920 + 0 with itself and mate mapped\n1278213 + 0 singletons (0.48% : N/A)\n557330 + 0 with mate mapped to a different chr\n440283 + 0 with mate mapped to a different chr (mapQ>=5)\n"
         #flagstat2 = ""
