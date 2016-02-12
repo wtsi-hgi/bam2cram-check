@@ -21,7 +21,7 @@ This file has been created on Feb 10, 2016.
 import os
 import argparse
 import logging
-from checks.stats_checks import RunSamtoolsComands, CompareStatsForFiles
+from checks.stats_checks import RunSamtoolsCommands, CompareStatsForFiles
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -51,8 +51,8 @@ def main():
             logging.error("This is not a file path: %s" %cram_path)
             raise ValueError("This is not a file path: %s")
 
-        RunSamtoolsComands.run_samtools_quickcheck(bam_path)
-        RunSamtoolsComands.run_samtools_quickcheck(cram_path)
+        RunSamtoolsCommands.run_samtools_quickcheck(bam_path)
+        RunSamtoolsCommands.run_samtools_quickcheck(cram_path)
         errors = CompareStatsForFiles.compare_bam_and_cram_statistics(bam_path, cram_path)
 
         if errors:

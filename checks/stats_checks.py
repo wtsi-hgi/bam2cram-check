@@ -10,7 +10,7 @@ from checks import utils
 """
 
 # module add hgi/samtools/git-latest
-class RunSamtoolsComands:
+class RunSamtoolsCommands:
     @classmethod
     def _run_subprocess(cls, args_list):
         proc = subprocess.run(args_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -33,7 +33,7 @@ class RunSamtoolsComands:
 class HandleSamtoolsStats:
     @classmethod
     def create_and_save_stats(cls, stats_fpath, data_fpath, ):
-        stats = RunSamtoolsComands.get_samtools_stats_output(data_fpath)
+        stats = RunSamtoolsCommands.get_samtools_stats_output(data_fpath)
         utils.write_to_file(stats_fpath, stats)
         return stats
 
@@ -62,8 +62,8 @@ class CompareStatsForFiles:
     @classmethod
     def compare_flagstats(cls, bam_path, cram_path):
         errors = []
-        flagstat_b = RunSamtoolsComands.get_samtools_flagstat_output(bam_path)
-        flagstat_c = RunSamtoolsComands.get_samtools_flagstat_output(cram_path)
+        flagstat_b = RunSamtoolsCommands.get_samtools_flagstat_output(bam_path)
+        flagstat_c = RunSamtoolsCommands.get_samtools_flagstat_output(cram_path)
         if flagstat_b != flagstat_c:
             logging.error("FLAGSTAT DIFFERENT for %s : %s and %s : %s " % (bam_path, flagstat_b, cram_path, flagstat_c))
             errors.append("FLAGSTAT DIFFERENT for %s : %s and %s : %s " % (bam_path, flagstat_b, cram_path, flagstat_c))
