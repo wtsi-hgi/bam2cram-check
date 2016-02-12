@@ -73,20 +73,20 @@ class TestRunSamtoolsCommands(unittest.TestCase):
         stats_checks.RunSamtoolsCommands._run_subprocess(['samtools', 'quickcheck', 'mybam'])
         mock_log_error.assert_called_with(['samtools', 'quickcheck', 'mybam'], None, 1)
 
-    @mock.patch('checks.stats_checks.RunSamtoolsCommands.run_samtools_quickcheck')
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands._run_subprocess')
     def test_run_samtools_quickcheck_1(self, mock_subproc):
         stats_checks.RunSamtoolsCommands.run_samtools_quickcheck('some_path')
-        mock_subproc.assert_called_with('some_path')
+        mock_subproc.assert_called_with(['samtools', 'quickcheck', '-v', 'some_path'])
 
-    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_flagstat_output')
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands._run_subprocess')
     def test_get_samtools_flagstat_output_1(self, mock_subproc):
         stats_checks.RunSamtoolsCommands.get_samtools_flagstat_output('some_path')
-        mock_subproc.assert_called_with('some_path')
+        mock_subproc.assert_called_with(['samtools', 'flagstat', 'some_path'])
 
-    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_stats_output')
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands._run_subprocess')
     def test_get_samtools_stats_output_1(self, mock_subproc):
         stats_checks.RunSamtoolsCommands.get_samtools_stats_output('some_path')
-        mock_subproc.assert_called_with('some_path')
+        mock_subproc.assert_called_with(['samtools', 'stats', 'some_path'])
 
 
 class TestHandleSamtoolsStats(unittest.TestCase):
