@@ -31,6 +31,27 @@ class RunSamtoolsCommands:
 
 
 class HandleSamtoolsStats:
+
+    @classmethod
+    def get_stats(cls, stats_fpath):
+        if stats_fpath and os.path.isfile(stats_fpath):
+            return utils.read_from_file(stats_fpath)
+        return None
+        #raise ValueError("No stats file found: %s" % str(stats_fpath))
+
+    @classmethod
+    def generate_stats(cls, data_fpath):
+        if not data_fpath or not os.path.isfile(data_fpath):
+            raise ValueError("Can't generate stats from a non-existing file: %s" % str(data_fpath))
+        return RunSamtoolsCommands.get_samtools_stats_output(data_fpath)
+
+    @classmethod
+    def save_stats(cls, stats, stats_fpath):    # =data_fpath+'.stats'
+        if not stats or not stats_fpath:
+            raise ValueError("You must provide both stats and stats file path for saving the stats to a file."
+                         " Received stats = %s and stats fpath = %s" % (str(stats), str(stats_fpath)))
+        return utils.write_to_file(stats_fpath, stats)
+
     @classmethod
     def create_and_save_stats(cls, stats_fpath, data_fpath, ):
         stats = RunSamtoolsCommands.get_samtools_stats_output(data_fpath)
@@ -51,7 +72,7 @@ class HandleSamtoolsStats:
             return cls.create_and_save_stats(stats_fpath, data_fpath)
 
     @classmethod
-    def get_chk_from_stats(cls, stats: str) -> str:
+    def get_checksum_from_stats(cls, stats: str) -> str:
         for line in stats.split('\n'):
             if re.search('^CHK', line):
                 return line
@@ -75,11 +96,21 @@ class CompareStatsForFiles:
         stats_path_b = bam_path + ".stats"
         stats_path_c = cram_path + ".stats"
 
-        stats_b = HandleSamtoolsStats.get_or_create_stats(stats_path_b, bam_path)
-        stats_c = HandleSamtoolsStats.get_or_create_stats(stats_path_c, cram_path)
+        stats_b = HandleSamtoolsStats.get_stats(stats_path_b)
+        if not stats_b:
+            stats_b = HandleSamtoolsStats.generate_stats(bam_path)
+            HandleSamtoolsStats.save_stats(stats_b, stats_path_b)
 
-        chk_b = HandleSamtoolsStats.get_chk_from_stats(stats_b)
-        chk_c = HandleSamtoolsStats.get_chk_from_stats(stats_c)
+        stats_c = HandleSamtoolsStats.get_stats(stats_path_c)
+        if not stats_c:
+            stats_c = HandleSamtoolsStats.generate_stats(cram_path)
+            HandleSamtoolsStats.save_stats(stats_c, stats_path_c)
+
+        # stats_b = HandleSamtoolsStats.get_or_create_stats(stats_path_b, bam_path)
+        # stats_c = HandleSamtoolsStats.get_or_create_stats(stats_path_c, cram_path)
+
+        chk_b = HandleSamtoolsStats.get_checksum_from_stats(stats_b)
+        chk_c = HandleSamtoolsStats.get_checksum_from_stats(stats_c)
 
         if not chk_b:
             errors.append(("For some reason there is no CHK line in the samtools stats of %s " % bam_path))

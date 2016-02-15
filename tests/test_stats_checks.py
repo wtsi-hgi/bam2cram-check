@@ -99,13 +99,13 @@ class TestHandleSamtoolsStats(unittest.TestCase):
                 "Summary Numbers. Use `grep ^SN | cut -f 2-` to extract this part.\nSN      raw total sequences:    " \
                 "268395942"
         wanted_result = "CHK     1bfca46a        2046405a        f4f56eb9"
-        actual_result = stats_checks.HandleSamtoolsStats.get_chk_from_stats(stats)
+        actual_result = stats_checks.HandleSamtoolsStats.get_checksum_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
     def test_get_chk_from_stats_2(self):
         stats = ""
         wanted_result = None
-        actual_result = stats_checks.HandleSamtoolsStats.get_chk_from_stats(stats)
+        actual_result = stats_checks.HandleSamtoolsStats.get_checksum_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
     def test_get_chk_from_stats_3(self):
@@ -114,7 +114,7 @@ class TestHandleSamtoolsStats(unittest.TestCase):
                 "Summary Numbers. Use `grep ^SN | cut -f 2-` to extract this part.\nSN      raw total sequences:    " \
                 "268395942"
         wanted_result = None
-        actual_result = stats_checks.HandleSamtoolsStats.get_chk_from_stats(stats)
+        actual_result = stats_checks.HandleSamtoolsStats.get_checksum_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
     @mock.patch('checks.utils.write_to_file')
