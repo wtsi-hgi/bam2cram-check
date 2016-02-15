@@ -72,7 +72,7 @@ class HandleSamtoolsStats:
             return cls.create_and_save_stats(stats_fpath, data_fpath)
 
     @classmethod
-    def get_checksum_from_stats(cls, stats: str) -> str:
+    def extract_checksum_from_stats(cls, stats: str) -> str:
         for line in stats.split('\n'):
             if re.search('^CHK', line):
                 return line
@@ -81,7 +81,7 @@ class HandleSamtoolsStats:
 
 class CompareStatsForFiles:
     @classmethod
-    def compare_flagstats(cls, bam_path, cram_path):
+    def compare_files_by_flagstats(cls, bam_path, cram_path):
         errors = []
         flagstat_b = RunSamtoolsCommands.get_samtools_flagstat_output(bam_path)
         flagstat_c = RunSamtoolsCommands.get_samtools_flagstat_output(cram_path)
@@ -91,7 +91,7 @@ class CompareStatsForFiles:
         return errors
 
     @classmethod
-    def compare_sequence_checksum(cls, bam_path, cram_path):
+    def compare_files_by_sequence_checksum(cls, bam_path, cram_path):
         errors = []
         stats_path_b = bam_path + ".stats"
         stats_path_c = cram_path + ".stats"
@@ -109,8 +109,8 @@ class CompareStatsForFiles:
         # stats_b = HandleSamtoolsStats.get_or_create_stats(stats_path_b, bam_path)
         # stats_c = HandleSamtoolsStats.get_or_create_stats(stats_path_c, cram_path)
 
-        chk_b = HandleSamtoolsStats.get_checksum_from_stats(stats_b)
-        chk_c = HandleSamtoolsStats.get_checksum_from_stats(stats_c)
+        chk_b = HandleSamtoolsStats.extract_checksum_from_stats(stats_b)
+        chk_c = HandleSamtoolsStats.extract_checksum_from_stats(stats_c)
 
         if not chk_b:
             errors.append(("For some reason there is no CHK line in the samtools stats of %s " % bam_path))
@@ -125,10 +125,10 @@ class CompareStatsForFiles:
         return errors
 
     @classmethod
-    def compare_bam_and_cram_statistics(cls, bam_path, cram_path):
+    def compare_bam_and_cram_by_statistics(cls, bam_path, cram_path):
         errors = []
-        errors.extend(cls.compare_flagstats(bam_path, cram_path))
-        errors.extend(cls.compare_sequence_checksum(bam_path, cram_path))
+        errors.extend(cls.compare_files_by_flagstats(bam_path, cram_path))
+        errors.extend(cls.compare_files_by_sequence_checksum(bam_path, cram_path))
         return errors
 
 

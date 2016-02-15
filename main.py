@@ -53,7 +53,7 @@ def main():
 
         RunSamtoolsCommands.run_samtools_quickcheck(bam_path)
         RunSamtoolsCommands.run_samtools_quickcheck(cram_path)
-        errors = CompareStatsForFiles.compare_bam_and_cram_statistics(bam_path, cram_path)
+        errors = CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)
 
         if errors:
             if args.e:

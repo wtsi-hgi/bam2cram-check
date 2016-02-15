@@ -99,13 +99,13 @@ class TestHandleSamtoolsStats(unittest.TestCase):
                 "Summary Numbers. Use `grep ^SN | cut -f 2-` to extract this part.\nSN      raw total sequences:    " \
                 "268395942"
         wanted_result = "CHK     1bfca46a        2046405a        f4f56eb9"
-        actual_result = stats_checks.HandleSamtoolsStats.get_checksum_from_stats(stats)
+        actual_result = stats_checks.HandleSamtoolsStats.extract_checksum_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
     def test_get_chk_from_stats_2(self):
         stats = ""
         wanted_result = None
-        actual_result = stats_checks.HandleSamtoolsStats.get_checksum_from_stats(stats)
+        actual_result = stats_checks.HandleSamtoolsStats.extract_checksum_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
     def test_get_chk_from_stats_3(self):
@@ -114,7 +114,7 @@ class TestHandleSamtoolsStats(unittest.TestCase):
                 "Summary Numbers. Use `grep ^SN | cut -f 2-` to extract this part.\nSN      raw total sequences:    " \
                 "268395942"
         wanted_result = None
-        actual_result = stats_checks.HandleSamtoolsStats.get_checksum_from_stats(stats)
+        actual_result = stats_checks.HandleSamtoolsStats.extract_checksum_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
     @mock.patch('checks.utils.write_to_file')
@@ -157,4 +157,4 @@ class TestCompareStatsForFiles(unittest.TestCase):
         flagstat1 = "268505766 + 0 in total (QC-passed reads + QC-failed reads)\n0 + 0 secondary\n0 + 0 supplementary\n30981933 + 0 duplicates\n266920133 + 0 mapped (99.41% : N/A)\n268505766 + 0 paired in sequencing\n134252883 + 0 read1\n134252883 + 0 read2\n261775882 + 0 properly paired (97.49% : N/A)\n265641920 + 0 with itself and mate mapped\n1278213 + 0 singletons (0.48% : N/A)\n557330 + 0 with mate mapped to a different chr\n440283 + 0 with mate mapped to a different chr (mapQ>=5)\n"
         #flagstat2 = ""
         mock_flagst.side_effect = [flagstat1, flagstat1]
-        self.assertListEqual([], stats_checks.CompareStatsForFiles.compare_flagstats('blah1', "blah2"))
+        self.assertListEqual([], stats_checks.CompareStatsForFiles.compare_files_by_flagstats('blah1', "blah2"))
