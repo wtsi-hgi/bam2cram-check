@@ -85,12 +85,13 @@ class TestRunSamtoolsCommands(unittest.TestCase):
 
     @mock.patch('checks.stats_checks.RunSamtoolsCommands._run_subprocess')
     def test_get_samtools_stats_output_1(self, mock_subproc):
-        stats_checks.RunSamtoolsCommands.get_samtools_stats_output('some_path')
+        mock_subproc.return_value = 'some_stats'
+        result = stats_checks.RunSamtoolsCommands.get_samtools_stats_output('some_path')
         mock_subproc.assert_called_with(['samtools', 'stats', 'some_path'])
+        self.assertEqual(result, 'some_stats')
 
 
 class TestHandleSamtoolsStats(unittest.TestCase):
-
 
     def test_get_chk_from_stats_1(self):
         stats = "# CHK, Checksum [2]Read Names   [3]Sequences    [4]Qualities\n# CHK, CRC32 of reads which passed " \
@@ -116,9 +117,40 @@ class TestHandleSamtoolsStats(unittest.TestCase):
         actual_result = stats_checks.HandleSamtoolsStats.get_chk_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
+    @mock.patch('checks.utils.write_to_file')
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_stats_output')
+    def test_create_and_save_stats_1(self, mock_stats, mock_write_f):
+        mock_stats.return_value = 'some_stats'
+        result = stats_checks.HandleSamtoolsStats.create_and_save_stats('stats_path', 'data_path')
+        mock_write_f.assume_called_with('stats_path', 'data_stats')
+        self.assertEqual(result, 'some_stats')
 
-class TestGetCHK(unittest.TestCase):
+    def test_get_or_create_stats_1(self):
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.get_or_create_stats, None, None)
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.get_or_create_stats, 'some_path', None)
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.get_or_create_stats, None, 'some_path')
 
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.utils.read_from_file')
+    def test_get_or_create_stats_2(self, mock_read_f, mock_path):
+        mock_read_f.return_value = 'stats_read_from_file'
+        mock_path.return_value = True
+        result = stats_checks.HandleSamtoolsStats.get_or_create_stats('some_path', None)
+        self.assertEqual(result, 'stats_read_from_file')
+
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats.create_and_save_stats')
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.utils.read_from_file')
+    def test_get_or_create_stats_3(self, mock_read_f, mock_path, mock_stats):
+        mock_read_f.return_value = 'stats_read_from_file'
+        mock_path.isfile.return_value = True
+        mock_stats.return_value = 'some_stats'
+        result = stats_checks.HandleSamtoolsStats.get_or_create_stats(None, 'some_path')
+        self.assertEqual(result, 'some_stats')
+
+
+
+class TestCompareStatsForFiles(unittest.TestCase):
 
     @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_flagstat_output')
     def test_compare_flagstats(self, mock_flagst):
