@@ -41,7 +41,7 @@ def read_from_file(fpath):
 def write_to_file(fpath, text):
     with open(fpath, 'w') as f:
         f.write(text)
-
+    return True
 
 def check_path_writable(fpath):
     if os.path.isdir(fpath):

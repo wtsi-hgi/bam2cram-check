@@ -54,6 +54,8 @@ class HandleSamtoolsStats:
 
     @classmethod
     def fetch_and_persist_stats(cls, fpath):
+        if not fpath or not os.path.isfile(fpath):
+            raise ValueError("You need to give a valid file path if you want the stats")
         stats_fpath = fpath + ".stats"
         stats = HandleSamtoolsStats._get_stats(stats_fpath) # TODO: try - catch ValueError
         if not stats:

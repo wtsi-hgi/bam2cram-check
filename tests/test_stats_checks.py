@@ -97,6 +97,74 @@ class TestHandleSamtoolsStats(unittest.TestCase):
         actual_result = stats_checks.HandleSamtoolsStats.extract_seq_checksum_from_stats(stats)
         self.assertEqual(wanted_result, actual_result)
 
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.utils.read_from_file')
+    def test_get_stats_1(self, mock_readf, mock_path):
+        mock_readf.return_value = 'some stats'
+        mock_path.isfile.return_value = True
+        result = stats_checks.HandleSamtoolsStats._get_stats('some path')
+        expected = 'some stats'
+        self.assertEqual(result, expected)
+
+    @mock.patch('checks.stats_checks.os.path')
+    def test_get_stats_2(self, mock_path):
+        mock_path.isfile.return_value = False
+        result = stats_checks.HandleSamtoolsStats._get_stats('some path')
+        expected = None
+        self.assertEqual(result, expected)
+
+    def test_get_stats_3(self):
+        result = stats_checks.HandleSamtoolsStats._get_stats(None)
+        expected = None
+        self.assertEqual(result, expected)
+
+
+    @mock.patch('checks.stats_checks.os.path')
+    def test_generate_stats_1(self, mock_path):
+        mock_path.isfile.return_value = False
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats._generate_stats, 'some_path')
+
+    def test_generate_stats_2(self):
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats._generate_stats, None)
+
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_stats_output')
+    def test_generate_stats_3(self, mock_stats, mock_path):
+        mock_stats.return_value = 'some stats'
+        mock_path.isfile.return_value = True
+        result = stats_checks.HandleSamtoolsStats._generate_stats('some path')
+        expected = 'some stats'
+        self.assertEqual(result, expected)
+
+
+    def test_save_stats_1(self):
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats._save_stats, None, None)
+
+    def test_save_stats_2(self):
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats._save_stats, None, 'irrelevant')
+
+    @mock.patch('checks.utils.write_to_file')
+    def test_save_stats_3(self, mock_writef):
+        mock_writef.return_value = True
+        result = stats_checks.HandleSamtoolsStats._save_stats('some stats', 'some path')
+        expected = True
+        self.assertEqual(result, expected)
+
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats._get_stats')
+    def test_fetch_and_persist_stats_1(self, mock_stats, mock_path):
+        mock_stats.return_value = 'some stats'
+        mock_path.isfile.return_value = True
+        result = stats_checks.HandleSamtoolsStats.fetch_and_persist_stats('some path')
+        expected = 'some stats'
+        self.assertEqual(result, expected)
+
+    def test_fetch_and_persist_stats_2(self):
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.fetch_and_persist_stats, None)
+
+    def test_fetch_and_persist_stats_3(self):
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.fetch_and_persist_stats, 'invalid path')
+
     # @mock.patch('checks.utils.write_to_file')
     # @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_stats_output')
     # def test_create_and_save_stats_1(self, mock_stats, mock_write_f):
