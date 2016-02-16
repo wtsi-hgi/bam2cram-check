@@ -81,7 +81,7 @@ class HandleSamtoolsStats:
     #         return cls.create_and_save_stats(stats_fpath, data_fpath)
 
     @classmethod
-    def extract_checksum_from_stats(cls, stats: str) -> str:
+    def extract_seq_checksum_from_stats(cls, stats: str) -> str:
         for line in stats.split('\n'):
             if re.search('^CHK', line):
                 return line
@@ -90,7 +90,7 @@ class HandleSamtoolsStats:
 
 class CompareStatsForFiles:
     @classmethod
-    def compare_files_by_flagstats(cls, flagstat_b, flagstat_c):
+    def compare_flagstats(cls, flagstat_b, flagstat_c):
         errors = []
         if flagstat_b != flagstat_c:
             logging.error("FLAGSTAT DIFFERENT:\n %s then:\n %s " % (flagstat_b, flagstat_c))
@@ -98,7 +98,7 @@ class CompareStatsForFiles:
         return errors
 
     @classmethod
-    def compare_files_by_sequence_checksum(cls, stats_b, stats_c):
+    def compare_stats_by_sequence_checksum(cls, stats_b, stats_c):
         errors = []
         # stats_path_b = bam_path + ".stats"
         #
@@ -111,9 +111,12 @@ class CompareStatsForFiles:
         # stats_b = HandleSamtoolsStats.get_or_create_stats(stats_path_b, bam_path)
         # stats_c = HandleSamtoolsStats.get_or_create_stats(stats_path_c, cram_path)
 
+        if not stats_b or not stats_c:
+            errors.append("You need to provide both BAM and CRAM stats for cmparison")
+            return errors
 
-        chk_b = HandleSamtoolsStats.extract_checksum_from_stats(stats_b)
-        chk_c = HandleSamtoolsStats.extract_checksum_from_stats(stats_c)
+        chk_b = HandleSamtoolsStats.extract_seq_checksum_from_stats(stats_b)
+        chk_c = HandleSamtoolsStats.extract_seq_checksum_from_stats(stats_c)
 
         if not chk_b:
             errors.append("For some reason there is no CHK line in the samtools stats")
@@ -127,16 +130,17 @@ class CompareStatsForFiles:
             logging.error("STATS SEQUENCE CHECKSUM DIFFERENT: %s and %s" % (chk_b, chk_c))
         return errors
 
+    # TODO: check on flagstat and stats that they exist and raise errors if they dont
     @classmethod
     def compare_bam_and_cram_by_statistics(cls, bam_path, cram_path):
         errors = []
         flagstat_b = RunSamtoolsCommands.get_samtools_flagstat_output(bam_path)
         flagstat_c = RunSamtoolsCommands.get_samtools_flagstat_output(cram_path)
-        errors.extend(cls.compare_files_by_flagstats(flagstat_b, flagstat_c))
+        errors.extend(cls.compare_flagstats(flagstat_b, flagstat_c))
 
         stats_b = HandleSamtoolsStats.fetch_and_persist_stats(bam_path)
         stats_c = HandleSamtoolsStats.fetch_and_persist_stats(cram_path)
-        errors.extend(cls.compare_files_by_sequence_checksum(stats_b, stats_c))
+        errors.extend(cls.compare_stats_by_sequence_checksum(stats_b, stats_c))
         return errors
 
 
