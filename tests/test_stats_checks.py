@@ -165,44 +165,80 @@ class TestHandleSamtoolsStats(unittest.TestCase):
     def test_fetch_and_persist_stats_3(self):
         self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.fetch_and_persist_stats, 'invalid path')
 
-    # @mock.patch('checks.utils.write_to_file')
-    # @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_stats_output')
-    # def test_create_and_save_stats_1(self, mock_stats, mock_write_f):
-    #     mock_stats.return_value = 'some_stats'
-    #     result = stats_checks.HandleSamtoolsStats.create_and_save_stats('stats_path', 'data_path')
-    #     mock_write_f.assume_called_with('stats_path', 'data_stats')
-    #     self.assertEqual(result, 'some_stats')
-    #
-    # def test_get_or_create_stats_1(self):
-    #     self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.get_or_create_stats, None, None)
-    #     self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.get_or_create_stats, 'some_path', None)
-    #     self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.get_or_create_stats, None, 'some_path')
-    #
-    # @mock.patch('checks.stats_checks.os.path')
-    # @mock.patch('checks.stats_checks.utils.read_from_file')
-    # def test_get_or_create_stats_2(self, mock_read_f, mock_path):
-    #     mock_read_f.return_value = 'stats_read_from_file'
-    #     mock_path.return_value = True
-    #     result = stats_checks.HandleSamtoolsStats.get_or_create_stats('some_path', None)
-    #     self.assertEqual(result, 'stats_read_from_file')
-    #
-    # @mock.patch('checks.stats_checks.HandleSamtoolsStats.create_and_save_stats')
-    # @mock.patch('checks.stats_checks.os.path')
-    # @mock.patch('checks.stats_checks.utils.read_from_file')
-    # def test_get_or_create_stats_3(self, mock_read_f, mock_path, mock_stats):
-    #     mock_read_f.return_value = 'stats_read_from_file'
-    #     mock_path.isfile.return_value = True
-    #     mock_stats.return_value = 'some_stats'
-    #     result = stats_checks.HandleSamtoolsStats.get_or_create_stats(None, 'some_path')
-    #     self.assertEqual(result, 'some_stats')
-    #
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats._generate_stats')
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats._save_stats')
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats._get_stats')
+    def test_fetch_and_persist_stats_4(self, mock_get_s, mock_save_s, mock_gen_s, mock_path):
+        mock_get_s.return_value = None
+        mock_save_s.return_value = True
+        mock_gen_s.return_value = 'some stats'
+        mock_path.isfile.return_value = True
+        result = stats_checks.HandleSamtoolsStats.fetch_and_persist_stats('some path')
+        expected = 'some stats'
+        self.assertEqual(result, expected)
 
 
-# class TestCompareStatsForFiles(unittest.TestCase):
-#
-#     @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_flagstat_output')
-#     def test_compare_flagstats(self, mock_flagst):
-#         #flagstat1 = "268505766 + 0 in total (QC-passed reads + QC-failed reads)\n0 + 0 secondary\n0 + 0 supplementary\n30981933 + 0 duplicates\n266920133 + 0 mapped (99.41% : N/A)\n268505766 + 0 paired in sequencing\n134252883 + 0 read1\n134252883 + 0 read2\n261775882 + 0 properly paired (97.49% : N/A)\n265641920 + 0 with itself and mate mapped\n1278213 + 0 singletons (0.48% : N/A)\n557330 + 0 with mate mapped to a different chr\n440283 + 0 with mate mapped to a different chr (mapQ>=5)\n"
-#         flagstat1 = "some flagstat"
-#         mock_flagst.side_effect = [flagstat1, flagstat1]
-#         self.assertListEqual([], stats_checks.CompareStatsForFiles.compare_flagstats('blah1', "blah2"))
+
+class TestCompareStatsForFiles(unittest.TestCase):
+
+    def test_compare_flagstats_1(self):
+        result = stats_checks.CompareStatsForFiles.compare_flagstats('flagstat1', 'flagstat2')
+        self.assertEqual(len(result), 1)
+
+    def test_compare_flagstats_2(self):
+        result = stats_checks.CompareStatsForFiles.compare_flagstats('flagstat1', 'flagstat1')
+        self.assertEqual(len(result), 0)
+
+
+    def test_compare_stats_by_sequence_checksum_1(self):
+        result = stats_checks.CompareStatsForFiles.compare_stats_by_sequence_checksum('stats1\nCHK 1234', 'stats2\nCHK 1234')
+        self.assertEqual(len(result), 0)
+
+    def test_compare_stats_by_sequence_checksum_2(self):
+        result = stats_checks.CompareStatsForFiles.compare_stats_by_sequence_checksum('stats1\nCHK 1234', 'stats2\nCHK 7777')
+        self.assertEqual(len(result), 1)
+
+    def test_compare_stats_by_sequence_checksum_3(self):
+        result = stats_checks.CompareStatsForFiles.compare_stats_by_sequence_checksum('stats1\nCHK 1234', '')
+        self.assertEqual(len(result), 1)
+
+    def test_compare_stats_by_sequence_checksum_4(self):
+        result = stats_checks.CompareStatsForFiles.compare_stats_by_sequence_checksum('stats1\n', 'stats2\n')
+        self.assertEqual(len(result), 2)
+
+    def test_compare_bam_and_cram_by_statistics_1(self):
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('', '')
+        self.assertEqual(len(result), 2)
+
+    @mock.patch('checks.stats_checks.os.path')
+    def test_compare_bam_and_cram_by_statistics_2(self, mock_path):
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('', 'some path')
+        mock_path.isfile.return_value = True
+        self.assertEqual(len(result), 1)
+
+
+    # def compare_bam_and_cram_by_statistics(cls, bam_path, cram_path):
+    #     errors = []
+    #     if not bam_path or not os.path.isfile(bam_path):
+    #         errors.append("The BAM file path: %s is not valid" % bam_path)
+    #     if not cram_path or not os.path.isfile(cram_path):
+    #         errors.append("The CRAM file path:%s is not valid" % cram_path)
+    #     if errors:
+    #         return errors
+    #     flagstat_b = RunSamtoolsCommands.get_samtools_flagstat_output(bam_path)
+    #     flagstat_c = RunSamtoolsCommands.get_samtools_flagstat_output(cram_path)
+    #     errors.extend(cls.compare_flagstats(flagstat_b, flagstat_c))
+    #
+    #     try:
+    #         stats_b = HandleSamtoolsStats.fetch_and_persist_stats(bam_path)
+    #     except ValueError as e:
+    #         errors.append(str(e))
+    #
+    #     try:
+    #         stats_c = HandleSamtoolsStats.fetch_and_persist_stats(cram_path)
+    #     except ValueError as e:
+    #         errors.append(str(e))
+    #     else:
+    #         errors.extend(cls.compare_stats_by_sequence_checksum(stats_b, stats_c))
+    #     return errors

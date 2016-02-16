@@ -63,25 +63,6 @@ class HandleSamtoolsStats:
             HandleSamtoolsStats._save_stats(stats, stats_fpath)
         return stats
 
-    # @classmethod
-    # def create_and_save_stats(cls, stats_fpath, data_fpath, ):
-    #     stats = RunSamtoolsCommands.get_samtools_stats_output(data_fpath)
-    #     utils.write_to_file(stats_fpath, stats)
-    #     return stats
-    #
-    # @classmethod
-    # def get_or_create_stats(cls, stats_fpath, data_fpath=None):
-    #     if not stats_fpath and not data_fpath:
-    #         raise ValueError("Insufficient information, the parameters stats_file and data_file can't both be None.")
-    #     if stats_fpath:
-    #         if not os.path.isfile(stats_fpath):
-    #             raise ValueError("Stats filepath is not a valid path: %s" % stats_fpath)
-    #         return utils.read_from_file(stats_fpath)
-    #     elif data_fpath:
-    #         if not os.path.isfile(data_fpath):
-    #             raise ValueError("Data filepath is not a valid path: %s" % data_fpath)
-    #         return cls.create_and_save_stats(stats_fpath, data_fpath)
-
     @classmethod
     def extract_seq_checksum_from_stats(cls, stats: str) -> str:
         for line in stats.split('\n'):
@@ -94,6 +75,9 @@ class CompareStatsForFiles:
     @classmethod
     def compare_flagstats(cls, flagstat_b, flagstat_c):
         errors = []
+        if not flagstat_c or not flagstat_b:
+            errors.append("At least one of the flagstats is missing")
+            return errors
         if flagstat_b != flagstat_c:
             logging.error("FLAGSTAT DIFFERENT:\n %s then:\n %s " % (flagstat_b, flagstat_c))
             errors.append("FLAGSTAT DIFFERENT:\n %s then:\n %s " % (flagstat_b, flagstat_c))
@@ -102,17 +86,6 @@ class CompareStatsForFiles:
     @classmethod
     def compare_stats_by_sequence_checksum(cls, stats_b, stats_c):
         errors = []
-        # stats_path_b = bam_path + ".stats"
-        #
-        #
-        # stats_c = HandleSamtoolsStats._get_stats(stats_path_c)
-        # if not stats_c:
-        #     stats_c = HandleSamtoolsStats._generate_stats(cram_path)
-        #     HandleSamtoolsStats._save_stats(stats_c, stats_path_c)
-
-        # stats_b = HandleSamtoolsStats.get_or_create_stats(stats_path_b, bam_path)
-        # stats_c = HandleSamtoolsStats.get_or_create_stats(stats_path_c, cram_path)
-
         if not stats_b or not stats_c:
             errors.append("You need to provide both BAM and CRAM stats for cmparison")
             return errors
@@ -132,17 +105,30 @@ class CompareStatsForFiles:
             logging.error("STATS SEQUENCE CHECKSUM DIFFERENT: %s and %s" % (chk_b, chk_c))
         return errors
 
-    # TODO: check on flagstat and stats that they exist and raise errors if they dont
     @classmethod
     def compare_bam_and_cram_by_statistics(cls, bam_path, cram_path):
         errors = []
+        if not bam_path or not os.path.isfile(bam_path):
+            errors.append("The BAM file path: %s is not valid" % bam_path)
+        if not cram_path or not os.path.isfile(cram_path):
+            errors.append("The CRAM file path:%s is not valid" % cram_path)
+        if errors:
+            return errors
         flagstat_b = RunSamtoolsCommands.get_samtools_flagstat_output(bam_path)
         flagstat_c = RunSamtoolsCommands.get_samtools_flagstat_output(cram_path)
         errors.extend(cls.compare_flagstats(flagstat_b, flagstat_c))
 
-        stats_b = HandleSamtoolsStats.fetch_and_persist_stats(bam_path)
-        stats_c = HandleSamtoolsStats.fetch_and_persist_stats(cram_path)
-        errors.extend(cls.compare_stats_by_sequence_checksum(stats_b, stats_c))
+        try:
+            stats_b = HandleSamtoolsStats.fetch_and_persist_stats(bam_path)
+        except ValueError as e:
+            errors.append(str(e))
+
+        try:
+            stats_c = HandleSamtoolsStats.fetch_and_persist_stats(cram_path)
+        except ValueError as e:
+            errors.append(str(e))
+        else:
+            errors.extend(cls.compare_stats_by_sequence_checksum(stats_b, stats_c))
         return errors
 
 
