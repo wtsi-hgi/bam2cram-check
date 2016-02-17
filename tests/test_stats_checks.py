@@ -137,23 +137,31 @@ class TestHandleSamtoolsStats(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-    def test_persist_stats_1(self):
+    def test_persist_stats_when_empty_params(self):
         self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.persist_stats, None, None)
 
-    def test_persist_stats_2(self):
+    def test_persist_stats_when_one_empty_param(self):
         self.assertRaises(ValueError, stats_checks.HandleSamtoolsStats.persist_stats, None, 'irrelevant')
 
+    @mock.patch('checks.stats_checks.os.path')
+    def test_persist_stats_when_existing_stats_file(self, mock_path):
+        mock_path.isfile.return_value = True
+        result = stats_checks.HandleSamtoolsStats.persist_stats('some stats', 'some path')
+        self.assertFalse(result)
+
     @mock.patch('checks.utils.write_to_file')
-    def test_persist_stats_3(self, mock_writef):
+    def test_persist_stats_when_ok(self, mock_writef):
         mock_writef.return_value = True
         result = stats_checks.HandleSamtoolsStats.persist_stats('some stats', 'some path')
         expected = True
         self.assertEqual(result, expected)
 
+    @mock.patch('checks.stats_checks.utils.can_read_file')
     @mock.patch('checks.stats_checks.os.path')
     @mock.patch('checks.stats_checks.HandleSamtoolsStats._get_stats')
     @mock.patch('checks.stats_checks.HandleSamtoolsStats._is_stats_file_older_than_data')
-    def test_fetch_stats_returns_stats(self, mock_older, mock_stats, mock_path):
+    def test_fetch_stats_returns_stats(self, mock_older, mock_stats, mock_path, mock_can_read):
+        mock_can_read.return_value = True
         mock_older.return_value = False
         mock_stats.return_value = 'some stats'
         mock_path.isfile.return_value = True
@@ -180,6 +188,15 @@ class TestHandleSamtoolsStats(unittest.TestCase):
         expected = 'some stats'
         self.assertEqual(result, expected)
 
+    @mock.patch('checks.stats_checks.utils.compare_mtimestamp')
+    def test_is_stats_file_older_than_data_when_older(self, mock_cmpts):
+        mock_cmpts.return_value = 1
+        self.assertTrue(stats_checks.HandleSamtoolsStats._is_stats_file_older_than_data('some path', 'other path'))
+
+    @mock.patch('checks.stats_checks.utils.compare_mtimestamp')
+    def test_is_stats_file_older_than_data_when_not(self, mock_cmpts):
+        mock_cmpts.return_value = -1
+        self.assertFalse(stats_checks.HandleSamtoolsStats._is_stats_file_older_than_data('some path', 'other path'))
 
 
 class TestCompareStatsForFiles(unittest.TestCase):
@@ -195,6 +212,11 @@ class TestCompareStatsForFiles(unittest.TestCase):
     def test_compare_flagstats_when_empty_params(self):
         result = stats_checks.CompareStatsForFiles.compare_flagstats(None, None)
         self.assertEqual(len(result), 1)
+
+    def test_compare_flagstats_when_one_param_empty(self):
+        result = stats_checks.CompareStatsForFiles.compare_flagstats(None, 'some flagstat')
+        self.assertEqual(len(result), 1)
+
 
 
     def test_compare_stats_by_sequence_checksum_1(self):

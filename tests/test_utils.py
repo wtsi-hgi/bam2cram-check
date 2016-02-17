@@ -67,7 +67,7 @@ class TestCheckPathWritable(unittest.TestCase):
         self.assertTrue(utils.check_path_writable('some_path'))
 
 
-class TestIO(unittest.TestCase):
+class TestReadWriteDisk(unittest.TestCase):
 
     @mock.patch('checks.utils.open')
     def test_read_from_file(self, mock_open):
@@ -101,12 +101,50 @@ class TestIO(unittest.TestCase):
 
 
 
+class TestCompareTimestamps(unittest.TestCase):
+
+    def test_compare_mtimestamp_when_empty_params(self):
+        self.assertRaises(ValueError, utils.compare_mtimestamp, None, None)
+
+    def test_compare_mtimestamp_when_one_param_empty(self):
+        self.assertRaises(ValueError, utils.compare_mtimestamp, None, 'some path')
+
+    def test_compare_mtimestamp_when_nonexisting_path1(self):
+        self.assertRaises(IOError, utils.compare_mtimestamp, 'nonexisting path', 'irrelevant')
+
+    def test_compare_mtimestamp_when_nonexisting_path2(self):
+        self.assertRaises(IOError, utils.compare_mtimestamp, 'irrelevant', 'nonexisting path2')
 
 
+    @mock.patch('checks.utils.can_read_file')
+    @mock.patch('checks.utils.os.path')
+    def test_compare_mtimestamp_when_unequal_ts_1(self, mock_path, mock_can_read):
+        mock_can_read.return_value = True
+        mock_path.isfile.return_value = True
+        mock_path.getmtime.side_effect = [4, 5]
+        result = utils.compare_mtimestamp('fpath1', 'fpath2')
+        expected = -1
+        self.assertEqual(result, expected)
 
+    @mock.patch('checks.utils.can_read_file')
+    @mock.patch('checks.utils.os.path')
+    def test_compare_mtimestamp_when_unequal_ts_2(self, mock_path, mock_can_read):
+        mock_can_read.return_value = True
+        mock_path.isfile.return_value = True
+        mock_path.getmtime.side_effect = [5, 4]
+        result = utils.compare_mtimestamp('fpath1', 'fpath2')
+        expected = 1
+        self.assertEqual(result, expected)
 
-
-
+    @mock.patch('checks.utils.can_read_file')
+    @mock.patch('checks.utils.os.path')
+    def test_compare_mtimestamp_when_equal_ts(self, mock_path, mock_can_read):
+        mock_can_read.return_value = True
+        mock_path.isfile.return_value = True
+        mock_path.getmtime.return_value = 4
+        result = utils.compare_mtimestamp('fpath1', 'fpath2')
+        expected = 0
+        self.assertEqual(result, expected)
 
 
 

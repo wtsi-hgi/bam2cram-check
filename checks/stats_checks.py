@@ -52,7 +52,8 @@ class HandleSamtoolsStats:
     def fetch_stats(cls, fpath, stats_fpath):
         if not fpath or not os.path.isfile(fpath):
             raise ValueError("You need to give a valid file path if you want the stats")
-        if os.path.isfile(stats_fpath) and not cls._is_stats_file_older_than_data(fpath, stats_fpath):
+        if os.path.isfile(stats_fpath) and not cls._is_stats_file_older_than_data(fpath, stats_fpath) and \
+                utils.can_read_file(stats_fpath):
             stats = HandleSamtoolsStats._get_stats(stats_fpath)
         else:
             stats = HandleSamtoolsStats._generate_stats(fpath)
@@ -123,6 +124,13 @@ class CompareStatsForFiles:
             return errors
 
         # TODO: check that the bam and cram are readable by me
+        if not utils.can_read_file(bam_path):
+            errors.append("Can't read file %s" % bam_path)
+        if not utils.can_read_file(cram_path):
+            errors.append("Can't read file %s" % cram_path)
+        if errors:
+            return errors
+
         flagstat_b = RunSamtoolsCommands.get_samtools_flagstat_output(bam_path)
         flagstat_c = RunSamtoolsCommands.get_samtools_flagstat_output(cram_path)
         errors.extend(cls.compare_flagstats(flagstat_b, flagstat_c))

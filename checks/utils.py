@@ -21,6 +21,7 @@ This file has been created on Feb 09, 2016.
 import logging
 import os
 
+
 def log_error(cmd_str, stderr, exit_code):
     if stderr:
         if exit_code != 0:
@@ -43,6 +44,7 @@ def write_to_file(fpath, text):
         f.write(text)
     return True
 
+
 def check_path_writable(fpath):
     if os.path.isdir(fpath):
         if os.access(fpath, os.W_OK):
@@ -59,13 +61,25 @@ def check_path_writable(fpath):
                 return True
             return False
 
+
 def compare_mtimestamp(fpath1, fpath2):
+    if not fpath2 or not fpath1:
+        raise ValueError("Both parameters neeed to be not None")
+    if not os.path.isfile(fpath1) or not can_read_file(fpath1):
+        raise IOError("The file %s either doesn't exist or I can't access it" % fpath1)
+    if not os.path.isfile(fpath2) or not can_read_file(fpath2):
+        raise IOError("The file %s either doesn't exist or I can't access it" % fpath2)
+
     tstamp1 = os.path.getmtime(fpath1)
     tstamp2 = os.path.getmtime(fpath2)
+    print("Tstamp1: %s, tstamp2: %s" % (tstamp1, tstamp2))
     if tstamp1 - tstamp2 < 0:
         return -1
     elif tstamp1 - tstamp2 > 0:
         return 1
     return 0
 
+
+def can_read_file(fpath):
+    return os.access(fpath, os.R_OK)
 
