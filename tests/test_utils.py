@@ -19,14 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 09, 2016.
 """
 
-import unittest
-import mock
-
+from unittest import mock, TestCase
 from checks import utils
 
 @mock.patch('checks.utils.os.path')
 @mock.patch('checks.utils.os.access')
-class TestCheckPathWritable(unittest.TestCase):
+class TestCheckPathWritable(TestCase):
 
     def test_check_path_writable_1(self, mock_access, mock_path):
         mock_path.isdir.return_value = False
@@ -67,7 +65,7 @@ class TestCheckPathWritable(unittest.TestCase):
         self.assertTrue(utils.check_path_writable('some_path'))
 
 
-class TestReadWriteDisk(unittest.TestCase):
+class TestReadWriteDisk(TestCase):
 
     @mock.patch('checks.utils.open')
     def test_read_from_file(self, mock_open):
@@ -101,7 +99,7 @@ class TestReadWriteDisk(unittest.TestCase):
 
 
 
-class TestCompareTimestamps(unittest.TestCase):
+class TestCompareTimestamps(TestCase):
 
     def test_compare_mtimestamp_when_empty_params(self):
         self.assertRaises(ValueError, utils.compare_mtimestamp, None, None)

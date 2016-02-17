@@ -19,14 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 09, 2016.
 """
 
-import unittest
-import mock
+from unittest import mock, TestCase
 from checks import stats_checks
-
-
 import subprocess
 from collections import namedtuple
-class TestRunSamtoolsCommands(unittest.TestCase):
+
+
+class TestRunSamtoolsCommands(TestCase):
 
     @mock.patch('checks.stats_checks.subprocess.run')
     def test_run_subprocess_1(self, mock_subproc):
@@ -71,7 +70,7 @@ class TestRunSamtoolsCommands(unittest.TestCase):
         self.assertEqual(result, 'some_stats')
 
 
-class TestHandleSamtoolsStats(unittest.TestCase):
+class TestHandleSamtoolsStats(TestCase):
 
     def test_extract_seq_checksum_from_stats_1(self):
         stats = "# CHK, Checksum [2]Read Names   [3]Sequences    [4]Qualities\n# CHK, CRC32 of reads which passed " \
@@ -199,7 +198,7 @@ class TestHandleSamtoolsStats(unittest.TestCase):
         self.assertFalse(stats_checks.HandleSamtoolsStats._is_stats_file_older_than_data('some path', 'other path'))
 
 
-class TestCompareStatsForFiles(unittest.TestCase):
+class TestCompareStatsForFiles(TestCase):
 
     def test_compare_flagstats_when_different(self):
         result = stats_checks.CompareStatsForFiles.compare_flagstats('flagstat1', 'flagstat2')
@@ -244,5 +243,13 @@ class TestCompareStatsForFiles(unittest.TestCase):
         result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('', 'some path')
         mock_path.isfile.return_value = True
         self.assertEqual(len(result), 1)
+
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.utils')
+    def test_compare_bam_and_cram_by_statistics(self, mock_readf, mock_path):
+        mock_readf.can_read_file.return_value = False
+        mock_path.isfile.return_value = True
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('bam path', 'cram path')
+        self.assertEqual(len(result), 2)
 
 
