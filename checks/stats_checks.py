@@ -5,11 +5,7 @@ import re
 
 from checks import utils
 
-"""
-- works only for lossless (checks that the stats are identical)
-"""
 
-# module add hgi/samtools/git-latest
 class RunSamtoolsCommands:
     @classmethod
     def _run_subprocess(cls, args_list):
@@ -37,7 +33,7 @@ class HandleSamtoolsStats:
         if stats_fpath and os.path.isfile(stats_fpath):
             return utils.read_from_file(stats_fpath)
         return None
-        #raise ValueError("No stats file found: %s" % str(stats_fpath))
+
 
     @classmethod
     def _generate_stats(cls, data_fpath):
@@ -45,23 +41,34 @@ class HandleSamtoolsStats:
             raise ValueError("Can't generate stats from a non-existing file: %s" % str(data_fpath))
         return RunSamtoolsCommands.get_samtools_stats_output(data_fpath)
 
+
     @classmethod
-    def _save_stats(cls, stats, stats_fpath):    # =data_fpath+'.stats'
+    def _is_stats_file_older_than_data(self, data_fpath, stats_fpath):
+        if utils.compare_mtimestamp(data_fpath, stats_fpath) >= 0:
+            return True
+        return False
+
+    @classmethod
+    def fetch_stats(cls, fpath, stats_fpath):
+        if not fpath or not os.path.isfile(fpath):
+            raise ValueError("You need to give a valid file path if you want the stats")
+        if os.path.isfile(stats_fpath) and not cls._is_stats_file_older_than_data(fpath, stats_fpath):
+            stats = HandleSamtoolsStats._get_stats(stats_fpath)
+        else:
+            stats = HandleSamtoolsStats._generate_stats(fpath)
+        return stats
+
+    @classmethod
+    def persist_stats(cls, stats, stats_fpath):
         if not stats or not stats_fpath:
             raise ValueError("You must provide both stats and stats file path for saving the stats to a file."
                          " Received stats = %s and stats fpath = %s" % (str(stats), str(stats_fpath)))
-        return utils.write_to_file(stats_fpath, stats)
-
-    @classmethod
-    def fetch_and_persist_stats(cls, fpath):
-        if not fpath or not os.path.isfile(fpath):
-            raise ValueError("You need to give a valid file path if you want the stats")
-        stats_fpath = fpath + ".stats"
-        stats = HandleSamtoolsStats._get_stats(stats_fpath) # TODO: try - catch ValueError
-        if not stats:
-            stats = HandleSamtoolsStats._generate_stats(fpath)
-            HandleSamtoolsStats._save_stats(stats, stats_fpath)
-        return stats
+        if not os.path.isfile(stats_fpath):
+            return utils.write_to_file(stats_fpath, stats)
+        else:
+            logging.warning("The stats file is older than the actual file, you need to remove/update it. "
+                            "Regenerating the stats, but without saving.")
+            return False
 
     @classmethod
     def extract_seq_checksum_from_stats(cls, stats: str) -> str:
@@ -114,21 +121,38 @@ class CompareStatsForFiles:
             errors.append("The CRAM file path:%s is not valid" % cram_path)
         if errors:
             return errors
+
+        # TODO: check that the bam and cram are readable by me
         flagstat_b = RunSamtoolsCommands.get_samtools_flagstat_output(bam_path)
         flagstat_c = RunSamtoolsCommands.get_samtools_flagstat_output(cram_path)
         errors.extend(cls.compare_flagstats(flagstat_b, flagstat_c))
 
+        stats_fpath_b = bam_path + ".stats"
+        stats_fpath_c = cram_path + ".stats"
         try:
-            stats_b = HandleSamtoolsStats.fetch_and_persist_stats(bam_path)
+            stats_b = HandleSamtoolsStats.fetch_stats(bam_path, stats_fpath_b)
         except ValueError as e:
             errors.append(str(e))
 
         try:
-            stats_c = HandleSamtoolsStats.fetch_and_persist_stats(cram_path)
+            stats_c = HandleSamtoolsStats.fetch_stats(cram_path, stats_fpath_c)
         except ValueError as e:
             errors.append(str(e))
-        else:
+
+        if stats_b and stats_c:
             errors.extend(cls.compare_stats_by_sequence_checksum(stats_b, stats_c))
+        else:
+            errors.append("Can't compare samtools stats.")
+
+        try:
+            HandleSamtoolsStats.persist_stats(stats_b, stats_fpath_b)
+        except IOError as e:
+            errors.append("Can't save stats to disk for %s file" % bam_path)
+
+        try:
+            HandleSamtoolsStats.persist_stats(stats_c, stats_fpath_c)
+        except IOError as e:
+            errors.append("Can't save stats to disk for %s file" % cram_path)
         return errors
 
 

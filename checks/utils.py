@@ -59,3 +59,13 @@ def check_path_writable(fpath):
                 return True
             return False
 
+def compare_mtimestamp(fpath1, fpath2):
+    tstamp1 = os.path.getmtime(fpath1)
+    tstamp2 = os.path.getmtime(fpath2)
+    if tstamp1 - tstamp2 < 0:
+        return -1
+    elif tstamp1 - tstamp2 > 0:
+        return 1
+    return 0
+
+
