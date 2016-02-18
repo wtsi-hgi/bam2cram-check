@@ -1,0 +1,1 @@
+There are 2 files with different data in them - a mpileup.1.bam and a mpileup.3.cram. They never had the same data. In addition to this there are some crams generated from mpileup.1.bam - 1 is ok, 1 is wrong (using wrong settings for scramble while cram-ing). There have been deposited here for future references.
