@@ -93,6 +93,7 @@ class CompareStatsForFiles:
 
     @classmethod
     def compare_stats_by_sequence_checksum(cls, stats_b, stats_c):
+        print("From comp stats, print statsb %s and stats c %s" % (stats_b, stats_c))
         errors = []
         if not stats_b or not stats_c:
             errors.append("You need to provide both BAM and CRAM stats for cmparison")
@@ -100,7 +101,7 @@ class CompareStatsForFiles:
 
         chk_b = HandleSamtoolsStats.extract_seq_checksum_from_stats(stats_b)
         chk_c = HandleSamtoolsStats.extract_seq_checksum_from_stats(stats_c)
-
+        print("CHK b: %s and CHK c: %s" % (chk_b, chk_c))
         if not chk_b:
             errors.append("For some reason there is no CHK line in the samtools stats")
             logging.error("For some reason there is no CHK line in the samtools stats")
@@ -111,6 +112,7 @@ class CompareStatsForFiles:
         if chk_b != chk_c:
             errors.append("STATS SEQUENCE CHECKSUM DIFFERENT: %s and %s" % (chk_b, chk_c))
             logging.error("STATS SEQUENCE CHECKSUM DIFFERENT: %s and %s" % (chk_b, chk_c))
+        print("BEFORE RETURNING, errors: %s" % errors)
         return errors
 
     @classmethod
@@ -123,7 +125,6 @@ class CompareStatsForFiles:
         if errors:
             return errors
 
-        # TODO: check that the bam and cram are readable by me
         if not utils.can_read_file(bam_path):
             errors.append("Can't read file %s" % bam_path)
         if not utils.can_read_file(cram_path):

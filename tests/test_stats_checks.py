@@ -253,3 +253,29 @@ class TestCompareStatsForFiles(TestCase):
         self.assertEqual(len(result), 2)
 
 
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.utils')
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands')
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats')
+    def test_compare_bam_and_cram_by_statistics(self, mock_stats, mock_samt, mock_utils, mock_path):
+        mock_path.isfile.return_value = True
+        mock_utils.can_read_file.return_value = True
+        mock_samt.get_samtools_flagstat_output.return_value = 'flag'
+        mock_stats.fetch_stats.side_effect = ['\nCHK 123', '\nCHK 456']
+        mock_stats.persist_stats.return_value = True
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('some bam', 'some cram')
+        self.assertEqual(len(result), 1)
+
+
+   # @mock.patch('checks.utils.can_read_file')
+   #  @mock.patch('checks.utils.os.path')
+   #  def test_compare_mtimestamp_when_unequal_ts_2(self, mock_path, mock_can_read):
+   #      mock_can_read.return_value = True
+   #      mock_path.isfile.return_value = True
+   #      mock_path.getmtime.side_effect = [5, 4]
+   #      result = utils.compare_mtimestamp('fpath1', 'fpath2')
+   #      expected = 1
+   #      self.assertEqual(result, expected)
+
+
+
