@@ -19,9 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 10, 2016.
 """
 import os
+import sys
 import argparse
 import logging
 from checks.stats_checks import RunSamtoolsCommands, CompareStatsForFiles
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -33,7 +35,9 @@ def parse_args():
     return parser.parse_args()
 
 
- # TODO: add check_if_writable here
+    # TODO: add check_if_writable here
+
+
 # To make the default logging to be stdout
 def main():
     args = parse_args()
@@ -48,13 +52,10 @@ def main():
             logging.error("This is not a file path: %s" % bam_path)
             raise ValueError("This is not a file path: %s")
         if not os.path.isfile(cram_path):
-            logging.error("This is not a file path: %s" %cram_path)
+            logging.error("This is not a file path: %s" % cram_path)
             raise ValueError("This is not a file path: %s")
 
-        RunSamtoolsCommands.run_samtools_quickcheck(bam_path)
-        RunSamtoolsCommands.run_samtools_quickcheck(cram_path)
         errors = CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)
-
         if errors:
             if args.e:
                 err_f = open(args.e, 'w')
@@ -63,6 +64,7 @@ def main():
                 err_f.close()
             else:
                 print(errors)
+            sys.exit(1)
 
 
 if __name__ == '__main__':

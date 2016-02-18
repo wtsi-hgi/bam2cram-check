@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This file has been created on Feb 09, 2016.
 """
 
+import os
 from unittest import mock, TestCase
 from checks import stats_checks
 import subprocess
@@ -49,7 +50,7 @@ class TestRunSamtoolsCommands(TestCase):
     def test_run_subprocess_3(self, mock_log_error, mock_run):
         some_obj = namedtuple('some_obj', ['stdout', 'stderr', 'returncode'])
         mock_run.return_value = some_obj(stdout='ERROR reading', stderr=None, returncode=1)
-        stats_checks.RunSamtoolsCommands._run_subprocess(['samtools', 'quickcheck', 'mybam'])
+        self.assertRaises(RuntimeError, stats_checks.RunSamtoolsCommands._run_subprocess, ['samtools', 'quickcheck', 'mybam'])
         mock_log_error.assert_called_with(['samtools', 'quickcheck', 'mybam'], None, 1)
 
     @mock.patch('checks.stats_checks.RunSamtoolsCommands._run_subprocess')
@@ -256,15 +257,47 @@ class TestCompareStatsForFiles(TestCase):
     @mock.patch('checks.stats_checks.os.path')
     @mock.patch('checks.stats_checks.utils')
     @mock.patch('checks.stats_checks.RunSamtoolsCommands')
-    @mock.patch('checks.stats_checks.HandleSamtoolsStats')
-    def test_compare_bam_and_cram_by_statistics(self, mock_stats, mock_samt, mock_utils, mock_path):
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats.fetch_stats')
+    @mock.patch('checks.stats_checks.HandleSamtoolsStats.persist_stats')
+    def test_compare_bam_and_cram_by_statistics(self, mock_persist_stats, mock_fetch_stats, mock_samt, mock_utils, mock_path):
         mock_path.isfile.return_value = True
         mock_utils.can_read_file.return_value = True
         mock_samt.get_samtools_flagstat_output.return_value = 'flag'
-        mock_stats.fetch_stats.side_effect = ['\nCHK 123', '\nCHK 456']
-        mock_stats.persist_stats.return_value = True
+        mock_fetch_stats.side_effect = ['\nCHK 123', '\nCHK 456']
+        mock_persist_stats.return_value = True
         result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('some bam', 'some cram')
         self.assertEqual(len(result), 1)
+
+
+class TestUsingActualFiles(TestCase):
+    def setUp(self):
+        self.test_data_dirpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test-cases')
+
+    def test_compare_bam_and_cram_equivalent_files(self):
+        bam_path = os.path.join(self.test_data_dirpath, 'ok_bam_cram/mpileup.3.bam')
+        cram_path = os.path.join(self.test_data_dirpath, 'ok_bam_cram/mpileup.3.cram')
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)
+        self.assertEqual(len(result), 0)
+
+    def test_compare_bam_and_cram_fail_quickcheck(self):
+        """
+        I've given it here 2 BAMs instead of a BAM and a CRAM because samtools 1.3 doesn't support quickcheck for crams.
+        TODO: update the test when a new version of samtools is available.
+        """
+        bam_path = os.path.join(self.test_data_dirpath, 'fail_quickcheck/c1#ID.bam')
+        cram_path = os.path.join(self.test_data_dirpath, 'fail_quickcheck/c1#clip.bam')
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)
+        self.assertEqual(len(result), 2)
+
+    def test_compare_bam_and_cram_diff_stats(self):
+        bam_path = os.path.join(self.test_data_dirpath, 'diff_stats/mpileup.1.bam')
+        cram_path = os.path.join(self.test_data_dirpath, 'diff_stats/mpileup.3.cram')
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)
+        print("Results %s " % result)
+        self.assertEqual(len(result), 2)
+
+    
+
 
 
    # @mock.patch('checks.utils.can_read_file')
