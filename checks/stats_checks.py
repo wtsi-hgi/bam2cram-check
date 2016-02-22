@@ -45,7 +45,7 @@ class HandleSamtoolsStats:
 
 
     @classmethod
-    def _is_stats_file_older_than_data(self, data_fpath, stats_fpath):
+    def _is_stats_file_older_than_data(cls, data_fpath, stats_fpath):
         if utils.compare_mtimestamp(data_fpath, stats_fpath) >= 0:
             return True
         return False

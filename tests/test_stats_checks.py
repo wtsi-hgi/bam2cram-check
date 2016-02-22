@@ -273,12 +273,14 @@ class TestUsingActualFiles(TestCase):
     def setUp(self):
         self.test_data_dirpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test-cases')
 
+    @skip
     def test_compare_bam_and_cram_equivalent_files(self):
         bam_path = os.path.join(self.test_data_dirpath, 'ok_bam_cram/mpileup.3.bam')
         cram_path = os.path.join(self.test_data_dirpath, 'ok_bam_cram/mpileup.3.cram')
         result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)
         self.assertEqual(len(result), 0)
 
+    @skip
     def test_compare_bam_and_cram_fail_quickcheck(self):
         """
         I've given it here 2 BAMs instead of a BAM and a CRAM because samtools 1.3 doesn't support quickcheck for crams.
@@ -289,6 +291,7 @@ class TestUsingActualFiles(TestCase):
         result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)
         self.assertEqual(len(result), 2)
 
+    @skip
     def test_compare_bam_and_cram_diff_stats(self):
         bam_path = os.path.join(self.test_data_dirpath, 'diff_stats/mpileup.1.bam')
         cram_path = os.path.join(self.test_data_dirpath, 'diff_stats/mpileup.3.cram')
