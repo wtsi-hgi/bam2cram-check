@@ -57,8 +57,13 @@ class HandleSamtoolsStats:
         if os.path.isfile(stats_fpath) and not cls._is_stats_file_older_than_data(fpath, stats_fpath) and \
                 utils.can_read_file(stats_fpath):
             stats = HandleSamtoolsStats._get_stats(stats_fpath)
+            logging.info("Reading stats from file %s" % stats_fpath)
         else:
             stats = HandleSamtoolsStats._generate_stats(fpath)
+            logging.info("Generating stats for file %s" % fpath)
+            if os.path.isfile(stats_fpath) and cls._is_stats_file_older_than_data(fpath, stats_fpath):
+                logging.warning("The stats file is older than the actual file, you need to remove/update it. "
+                                "Regenerating the stats, but without saving.")
         return stats
 
     @classmethod
@@ -67,11 +72,11 @@ class HandleSamtoolsStats:
             raise ValueError("You must provide both stats and stats file path for saving the stats to a file."
                          " Received stats = %s and stats fpath = %s" % (str(stats), str(stats_fpath)))
         if not os.path.isfile(stats_fpath):
+            logging.info("Persisting the stats to disk")
             return utils.write_to_file(stats_fpath, stats)
         else:
-            logging.warning("The stats file is older than the actual file, you need to remove/update it. "
-                            "Regenerating the stats, but without saving.")
-            return False
+            logging.info("Skipping persist_stats to disk, apparently there is a valid stats file there already.")
+        return False
 
     @classmethod
     def extract_seq_checksum_from_stats(cls, stats: str) -> str:
@@ -91,6 +96,8 @@ class CompareStatsForFiles:
         if flagstat_b != flagstat_c:
             logging.error("FLAGSTAT DIFFERENT:\n %s then:\n %s " % (flagstat_b, flagstat_c))
             errors.append("FLAGSTAT DIFFERENT:\n %s then:\n %s " % (flagstat_b, flagstat_c))
+        else:
+            logging.info("Flagstats are equal.")
         return errors
 
     @classmethod
@@ -123,6 +130,7 @@ class CompareStatsForFiles:
         if not cram_path or not os.path.isfile(cram_path):
             errors.append("The CRAM file path:%s is not valid" % cram_path)
         if errors:
+            logging.error("There are errors with the file paths you provided: %s" % errors)
             return errors
 
         # Check that the files are readable by me
@@ -131,6 +139,7 @@ class CompareStatsForFiles:
         if not utils.can_read_file(cram_path):
             errors.append("Can't read file %s" % cram_path)
         if errors:
+            logging.error("There are problems reading the files: %s" % errors)
             return errors
 
         # Quickcheck the files before anything:
@@ -144,6 +153,7 @@ class CompareStatsForFiles:
         except RuntimeError as e:
             errors.append(str(e))
         if errors:
+            logging.error("There are problems running quickcheck on the files you've given: %s" % errors)
             return errors
 
         # Calculate and compare flagstat:
@@ -159,6 +169,8 @@ class CompareStatsForFiles:
 
         if not errors:
             errors.extend(cls.compare_flagstats(flagstat_b, flagstat_c))
+        else:
+            logging.error("THere are problems running flagstat on the files you've given: %s" % errors)
 
         # Calculate and compare stats:
         stats_fpath_b = bam_path + ".stats"
@@ -178,6 +190,7 @@ class CompareStatsForFiles:
             errors.extend(cls.compare_stats_by_sequence_checksum(stats_b, stats_c))
         else:
             errors.append("Can't compare samtools stats.")
+            logging.error("For some reason I can't compare samtools stats for your files.")
 
         # Persist stats:
         try:
@@ -185,12 +198,14 @@ class CompareStatsForFiles:
                 HandleSamtoolsStats.persist_stats(stats_b, stats_fpath_b)
         except IOError as e:
             errors.append("Can't save stats to disk for %s file" % bam_path)
+            logging.error("Can't save stats to disk for %s file" % bam_path)
 
         try:
             if stats_c:
                 HandleSamtoolsStats.persist_stats(stats_c, stats_fpath_c)
         except IOError as e:
             errors.append("Can't save stats to disk for %s file" % cram_path)
+            logging.error("Can't save stats to disk for %s file" % cram_path)
         return errors
 
 

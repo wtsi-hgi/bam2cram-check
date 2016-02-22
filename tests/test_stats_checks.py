@@ -268,7 +268,7 @@ class TestCompareStatsForFiles(TestCase):
         result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('some bam', 'some cram')
         self.assertEqual(len(result), 1)
 
-@skip
+
 class TestUsingActualFiles(TestCase):
     def setUp(self):
         self.test_data_dirpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test-cases')
