@@ -15,7 +15,7 @@ Usage:
 python main.py -b <bam_file> -c <cram_file> -e <err_file> --log <log_file>
 ```
 
-Or alternatively, there is also a shell script for checking a full directory of BAMs and CRAMs:
+Or alternatively, there is also a shell script for checking a full directory of BAMs and CRAMs by submitting as a job to LSF for each pair of files converted:
 ```bash
 ./run_batch.sh <bam_dir> <cram_dir> <log_dir> <output_dir> <issues_dir>
 ```
