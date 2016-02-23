@@ -192,7 +192,7 @@ class CompareStatsForFiles:
         # Checking on samtools version:
         version_output = RunSamtoolsCommands.get_samtools_version_output()
         try:
-            cls.check_samtools_version(version_output)
+            HandleSamtoolsVersion.check_samtools_version(version_output)
         except ValueError as e:
             errors.append(str(e))
             return errors
