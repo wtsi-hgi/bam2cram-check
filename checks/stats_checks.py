@@ -27,6 +27,10 @@ class RunSamtoolsCommands:
     def get_samtools_stats_output(cls, fpath):
         return cls._run_subprocess(['samtools', 'stats', fpath])
 
+    @classmethod
+    def get_samtools_version_output(cls):
+        return cls._run_subprocess(['samtools', '--version'])
+
 
 class HandleSamtoolsStats:
 
@@ -86,6 +90,48 @@ class HandleSamtoolsStats:
         return None
 
 
+class HandleSamtoolsVersion:
+
+    @classmethod
+    def _get_version_nr_from_samtools_output(cls, output):
+        version_line = output.splitlines()[0]
+        tokens = version_line.split()
+        if len(tokens) < 2:
+            raise ValueError("samtools --version output looks different than expected. Can't parse it.")
+        return tokens[1]
+
+    @classmethod
+    def _extract_major_version_nr(cls, version):
+        return version.split('.', 1)[0]
+
+    @classmethod
+    def _extract_minor_version_nr(cls, version):
+        vers_tokens = version.split('.', 1)
+        if len(vers_tokens) < 2:
+            raise ValueError("samtools version output looks different than expected.Can't parse it.")
+        return vers_tokens[1].split('.', 1)
+
+    @classmethod
+    def check_samtools_version(cls, version_output):
+        errors = []
+        if not version_output:
+            errors.append("You need to use at least samtools version 1.3.")
+        version = cls._get_version_nr_from_samtools_output(version_output)
+        major_nr = cls._extract_major_version_nr(version)
+        minor_nr = cls._extract_minor_version_nr(version)
+        if not major_nr.isdigit():
+            raise ValueError("Can't parse samtools version string")
+        if int(major_nr) < 1:
+            raise ValueError("You need to use at least samtools version 1.3.")
+        else:
+            minor_nr_1 = minor_nr.split('.', 1)
+            if not minor_nr_1.isdigit():
+                raise ValueError("Can't parse samtools version string.")
+                return errors
+            if int(minor_nr_1[0]) < 3:
+                raise ValueError("You need to use at least samtools version 1.3.")
+
+
 class CompareStatsForFiles:
     @classmethod
     def compare_flagstats(cls, flagstat_b, flagstat_c):
@@ -121,6 +167,7 @@ class CompareStatsForFiles:
             logging.error("STATS SEQUENCE CHECKSUM DIFFERENT: %s and %s" % (chk_b, chk_c))
         return errors
 
+
     @classmethod
     def compare_bam_and_cram_by_statistics(cls, bam_path, cram_path):
         errors = []
@@ -140,6 +187,14 @@ class CompareStatsForFiles:
             errors.append("Can't read file %s" % cram_path)
         if errors:
             logging.error("There are problems reading the files: %s" % errors)
+            return errors
+
+        # Checking on samtools version:
+        version_output = RunSamtoolsCommands.get_samtools_version_output()
+        try:
+            cls.check_samtools_version(version_output)
+        except ValueError as e:
+            errors.append(str(e))
             return errors
 
         # Quickcheck the files before anything:
