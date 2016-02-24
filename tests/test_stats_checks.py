@@ -269,6 +269,86 @@ class TestCompareStatsForFiles(TestCase):
         self.assertEqual(len(result), 1)
 
 
+class TestHandleSamtoolsVersion(TestCase):
+
+    def test_get_version_nr_from_samtools_output_1_3(self):
+        samtools_output = "samtools 1.3\nUsing htslib 1.3\nCopyright (C) 2015 Genome Research Ltd.\n"
+        result = stats_checks.HandleSamtoolsVersion._get_version_nr_from_samtools_output(samtools_output)
+        expected = "1.3"
+        self.assertEqual(result, expected)
+
+    def test_get_version_nr_from_samtools_output_1_1(self):
+        samtools_output = "samtools 1.1\nUsing htslib 1.1\nCopyright (C) 2014 Genome Research Ltd.\n"
+        result = stats_checks.HandleSamtoolsVersion._get_version_nr_from_samtools_output(samtools_output)
+        expected = "1.1"
+        self.assertEqual(result, expected)
+
+    def test_get_version_nr_from_samtools_output_git_1_2(self):
+        samtools_output = "samtools 1.2-216-gdffc67f\nUsing htslib 1.2.1-218-g9f6fa0f\nCopyright (C) 2015 Genome Research Ltd.\n"
+        result = stats_checks.HandleSamtoolsVersion._get_version_nr_from_samtools_output(samtools_output)
+        expected = "1.2-216-gdffc67f"
+        self.assertEqual(result, expected)
+
+    def test_get_version_nr_from_samtools_output_git_1_218(self):
+        samtools_output = "samtools 1.2-218-g00e55ad\nUsing htslib 1.2.1-218-g9f6fa0f\nCopyright (C) 2015 Genome Research Ltd.\n"
+        result = stats_checks.HandleSamtoolsVersion._get_version_nr_from_samtools_output(samtools_output)
+        expected = "1.2-218-g00e55ad"
+        self.assertEqual(result, expected)
+
+
+    def test_extract_major_version_nr_1_1(self):
+        version = "1.1"
+        result = stats_checks.HandleSamtoolsVersion._extract_major_version_nr(version)
+        expected = "1"
+        self.assertEqual(result, expected)
+
+    def test_extract_major_version_nr_1_3(self):
+        version = "1.3"
+        result = stats_checks.HandleSamtoolsVersion._extract_major_version_nr(version)
+        expected = "1"
+        self.assertEqual(result, expected)
+
+    def test_extract_major_version_nr_1_218(self):
+        version = "1.2-218-g00e55ad"
+        result = stats_checks.HandleSamtoolsVersion._extract_major_version_nr(version)
+        expected = "1"
+        self.assertEqual(result, expected)
+
+    def test_extract_major_version_nr_1_218(self):
+        version = "1.2-218-g00e55ad"
+        result = stats_checks.HandleSamtoolsVersion._extract_major_version_nr(version)
+        expected = "1"
+        self.assertEqual(result, expected)
+
+    def test_extract_major_version_nr_0_2(self):
+        version = "0.2.0-rc7-68-g8b268c0"
+        result = stats_checks.HandleSamtoolsVersion._extract_major_version_nr(version)
+        expected = "0"
+        self.assertEqual(result, expected)
+
+
+    def test__extract_minor_version_nr_1_3(self):
+        version = "1.3"
+        result = stats_checks.HandleSamtoolsVersion._extract_minor_version_nr(version)
+        expected = "3"
+        self.assertEqual(result, expected)
+
+    def test__extract_minor_version_nr_1_218(self):
+        version = "1.2-218-g00e55ad"
+        result = stats_checks.HandleSamtoolsVersion._extract_minor_version_nr(version)
+        expected = "2"
+        self.assertEqual(result, expected)
+
+
+
+
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_version_output')
+    def test_check_samtools_version(self, mock_version):
+        mock_version.return_value = 'samtools 1.2\nUsing htslib 1.2.1\nCopyright (C) 2015 Genome Research Ltd.'
+
+
+
+
 class TestUsingActualFiles(TestCase):
     def setUp(self):
         self.test_data_dirpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'test-cases')
