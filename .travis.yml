@@ -5,7 +5,7 @@ python:
 
 env:
   global:
-    - SAMTOOLS_INSTALL=/opt/samtools
+    - SAMTOOLS_INSTALL=./samtools-install
     - PATH=$PATH:$SAMTOOLS_INSTALL/bin
 
 before_install:
