@@ -5,14 +5,14 @@ python:
 
 env:
   global:
-    - SAMTOOLS_INSTALL=./samtools-install
+    - SAMTOOLS_INSTALL=~/samtools-install
     - PATH=$PATH:$SAMTOOLS_INSTALL/bin
 
 before_install:
   - pip install codecov    
 
 install:
-  - ./scripts/install-samtools.sh
+  - ./scripts/install-samtools.sh $SAMTOOLS_INSTALL
   - pip install -r requirements.txt
 
 script:

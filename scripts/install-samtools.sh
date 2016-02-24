@@ -6,7 +6,7 @@ tar -xvjf samtools-1.3.tar.bz2
 rm samtools-1.3.tar.bz2
 cd samtools-1.3
 make
-make prefix=$SAMTOOLS_INSTALL install
+make prefix=$1 install
 cd ..
 rm -rf samtools-1.3
 
