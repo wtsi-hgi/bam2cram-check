@@ -106,10 +106,10 @@ class HandleSamtoolsVersion:
 
     @classmethod
     def _extract_minor_version_nr(cls, version):
-        vers_tokens = version.split('.', 1)
+        vers_tokens = re.split(r'[.-]', version, 1)
         if len(vers_tokens) < 2:
             raise ValueError("samtools version output looks different than expected.Can't parse it.")
-        return vers_tokens[1].split('.', 1)
+        return re.split(r'[.-]', vers_tokens[1], 1)[0]
 
     @classmethod
     def check_samtools_version(cls, version_output):
@@ -189,13 +189,13 @@ class CompareStatsForFiles:
             logging.error("There are problems reading the files: %s" % errors)
             return errors
 
-        # Checking on samtools version:
-        version_output = RunSamtoolsCommands.get_samtools_version_output()
-        try:
-            HandleSamtoolsVersion.check_samtools_version(version_output)
-        except ValueError as e:
-            errors.append(str(e))
-            return errors
+        # # Checking on samtools version:
+        # version_output = RunSamtoolsCommands.get_samtools_version_output()
+        # try:
+        #     HandleSamtoolsVersion.check_samtools_version(version_output)
+        # except ValueError as e:
+        #     errors.append(str(e))
+        #     return errors
 
         # Quickcheck the files before anything:
         try:
