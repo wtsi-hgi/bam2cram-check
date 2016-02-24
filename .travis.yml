@@ -3,10 +3,16 @@ language: python
 python:
   - "3.5"
 
+env:
+  global:
+    - SAMTOOLS_INSTALL=~/samtools-install
+    - PATH=$PATH:$SAMTOOLS_INSTALL/bin
+
 before_install:
   - pip install codecov    
 
-install: 
+install:
+  - ./scripts/install-samtools.sh $SAMTOOLS_INSTALL
   - pip install -r requirements.txt
 
 script:
