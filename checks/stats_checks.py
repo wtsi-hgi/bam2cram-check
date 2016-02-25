@@ -102,10 +102,7 @@ class HandleSamtoolsVersion:
 
     @classmethod
     def _extract_major_version_nr(cls, version):
-        maj_vs = version.split('.', 1)[0]
-        if not maj_vs.isdigit():
-            raise ValueError("samtools version output looks different than expected. Can't parse it.")
-        return maj_vs
+        return version.split('.', 1)[0]
 
     @classmethod
     def _extract_minor_version_nr(cls, version):
@@ -113,17 +110,19 @@ class HandleSamtoolsVersion:
         if len(vers_tokens) < 2:
             raise ValueError("samtools version output looks different than expected.Can't parse it.")
         min_vs = re.split(r'[.-]', vers_tokens[1], 1)[0]
-        if not min_vs.isdigit():
-            raise ValueError("samtools version output looks different than expected.Can't parse it.")
         return min_vs
 
     @classmethod
     def _check_major_version_nr(cls, major_vs_nr):
+        if not major_vs_nr.isdigit():
+            raise ValueError("samtools version output looks different than expected. Can't parse it.")
         if int(major_vs_nr) < 1:
             raise ValueError("You need to use at least samtools version 1.3.")
 
     @classmethod
     def _check_minor_version_nr(cls, minor_vs_nr):
+        if not minor_vs_nr.isdigit():
+            raise ValueError("samtools version output looks different than expected.Can't parse it.")
         minor_nr_1 = minor_vs_nr.split('.', 1)[0]
         if not minor_nr_1.isdigit():
             raise ValueError("Can't parse samtools version string.")

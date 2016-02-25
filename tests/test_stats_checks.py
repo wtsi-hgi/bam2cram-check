@@ -295,6 +295,20 @@ class TestHandleSamtoolsVersion(TestCase):
         expected = "1.2-218-g00e55ad"
         self.assertEqual(result, expected)
 
+    def test_get_version_nr_from_samtools_output(self):
+        output = "random"
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._get_version_nr_from_samtools_output, output)
+
+    def test_extract_minor_version_nr_random_str(self):
+        version = 'random'
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._extract_minor_version_nr, version)
+
+    def test_extract_minor_version_nr_no_minor(self):
+        version = '1'
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._extract_minor_version_nr, version)
+
+    def test_extract_minor_version_nr_(self):
+        pass
 
     def test_extract_major_version_nr_1_1(self):
         version = "1.1"
@@ -366,6 +380,7 @@ class TestHandleSamtoolsVersion(TestCase):
     def test_check_samtools_version_minor_vs_is_random(self):
         vs = "1.some stuff"
         self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, vs)
+
 
 
 
