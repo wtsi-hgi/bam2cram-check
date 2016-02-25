@@ -35,9 +35,6 @@ def parse_args():
     return parser.parse_args()
 
 
-    # TODO: add check_if_writable here
-
-
 # To make the default logging to be stdout
 def main():
     args = parse_args()
@@ -65,6 +62,8 @@ def main():
             else:
                 print(errors)
             sys.exit(1)
+        else:
+            logging.info("There were no errors and no differences between the stats for the 2 files.")
 
 
 if __name__ == '__main__':

@@ -268,6 +268,14 @@ class TestCompareStatsForFiles(TestCase):
         result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('some bam', 'some cram')
         self.assertEqual(len(result), 1)
 
+    @mock.patch('checks.stats_checks.os.path')
+    @mock.patch('checks.stats_checks.utils.can_read_file')
+    def test_compare_bam_and_cram_by_statistics_cant_read(self, mock_can_readf, mock_path):
+        mock_can_readf.return_value = False
+        mock_path.isfile.return_value = True
+        result = stats_checks.CompareStatsForFiles.compare_bam_and_cram_by_statistics('some bam', 'some cram')
+        self.assertEqual(len(result), 2)
+
 
 class TestHandleSamtoolsVersion(TestCase):
 
@@ -299,16 +307,25 @@ class TestHandleSamtoolsVersion(TestCase):
         output = "random"
         self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._get_version_nr_from_samtools_output, output)
 
-    def test_extract_minor_version_nr_random_str(self):
+    def test_check_minor_version_nr_random_str(self):
         version = 'random'
-        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._extract_minor_version_nr, version)
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._check_minor_version_nr, version)
+
+    def test_check_minor_version_nr_random_with_delim(self):
+        version = 'a.b'
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._check_minor_version_nr, version)
 
     def test_extract_minor_version_nr_no_minor(self):
         version = '1'
-        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._extract_minor_version_nr, version)
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._check_minor_version_nr, version)
 
-    def test_extract_minor_version_nr_(self):
-        pass
+    def test_check_major_version_nr_str(self):
+        version = 'random'
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._check_major_version_nr, version)
+
+    def test_check_major_version_too_low(self):
+        version = '0'
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion._check_major_version_nr, version)
 
     def test_extract_major_version_nr_1_1(self):
         version = "1.1"
