@@ -327,25 +327,45 @@ class TestHandleSamtoolsVersion(TestCase):
         self.assertEqual(result, expected)
 
 
-    def test__extract_minor_version_nr_1_3(self):
+    def test_extract_minor_version_nr_1_3(self):
         version = "1.3"
         result = stats_checks.HandleSamtoolsVersion._extract_minor_version_nr(version)
         expected = "3"
         self.assertEqual(result, expected)
 
-    def test__extract_minor_version_nr_1_218(self):
+    def test_extract_minor_version_nr_1_218(self):
         version = "1.2-218-g00e55ad"
         result = stats_checks.HandleSamtoolsVersion._extract_minor_version_nr(version)
         expected = "2"
         self.assertEqual(result, expected)
 
-
-
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_version_output')
+    def test_check_samtools_version_wrong_vs_1_2(self, mock_version):
+        mock_version.return_value = 'samtools 1.2\nUsing htslib 1.2.1\nCopyright (C) 2015 Genome Research Ltd.'
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, mock_version)
 
     @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_version_output')
-    def test_check_samtools_version(self, mock_version):
-        mock_version.return_value = 'samtools 1.2\nUsing htslib 1.2.1\nCopyright (C) 2015 Genome Research Ltd.'
+    def test_check_samtools_version_wrong_vs_1_218(self, mock_version):
+        mock_version.return_value = "samtools 1.2-218-g00e55ad\nUsing htslib 1.2.1-218-g9f6fa0f\nCopyright (C) 2015 Genome Research Ltd.\n"
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, mock_version)
 
+    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_version_output')
+    def test_check_samtools_version_no_vs(self, mock_version):
+        mock_version.return_value = None
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, mock_version)
+
+    def test_check_samtools_version_ok_vs(self):
+        vs = "samtools 1.3\nUsing htslib 1.3\nCopyright (C) 2015 Genome Research Ltd.\n"
+        result = stats_checks.HandleSamtoolsVersion.check_samtools_version(vs)
+        self.assertIsNone(result)
+
+    def test_check_samtools_version_is_random(self):
+        vs = "some stuff"
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, vs)
+
+    def test_check_samtools_version_minor_vs_is_random(self):
+        vs = "1.some stuff"
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, vs)
 
 
 

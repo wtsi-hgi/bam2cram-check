@@ -124,7 +124,7 @@ class HandleSamtoolsVersion:
         if int(major_nr) < 1:
             raise ValueError("You need to use at least samtools version 1.3.")
         else:
-            minor_nr_1 = minor_nr.split('.', 1)
+            minor_nr_1 = minor_nr.split('.', 1)[0]
             if not minor_nr_1.isdigit():
                 raise ValueError("Can't parse samtools version string.")
                 return errors
