@@ -102,34 +102,43 @@ class HandleSamtoolsVersion:
 
     @classmethod
     def _extract_major_version_nr(cls, version):
-        return version.split('.', 1)[0]
+        maj_vs = version.split('.', 1)[0]
+        if not maj_vs.isdigit():
+            raise ValueError("samtools version output looks different than expected. Can't parse it.")
+        return maj_vs
 
     @classmethod
     def _extract_minor_version_nr(cls, version):
         vers_tokens = re.split(r'[.-]', version, 1)
         if len(vers_tokens) < 2:
             raise ValueError("samtools version output looks different than expected.Can't parse it.")
-        return re.split(r'[.-]', vers_tokens[1], 1)[0]
+        min_vs = re.split(r'[.-]', vers_tokens[1], 1)[0]
+        if not min_vs.isdigit():
+            raise ValueError("samtools version output looks different than expected.Can't parse it.")
+        return min_vs
+
+    @classmethod
+    def _check_major_version_nr(cls, major_vs_nr):
+        if int(major_vs_nr) < 1:
+            raise ValueError("You need to use at least samtools version 1.3.")
+
+    @classmethod
+    def _check_minor_version_nr(cls, minor_vs_nr):
+        minor_nr_1 = minor_vs_nr.split('.', 1)[0]
+        if not minor_nr_1.isdigit():
+            raise ValueError("Can't parse samtools version string.")
+        if int(minor_nr_1[0]) < 3:
+            raise ValueError("You need to use at least samtools version 1.3.")
 
     @classmethod
     def check_samtools_version(cls, version_output):
-        errors = []
         if not version_output:
-            errors.append("You need to use at least samtools version 1.3.")
+            raise ValueError("samtools --version output is empty. You need to use at least samtools version 1.3.")
         version = cls._get_version_nr_from_samtools_output(version_output)
         major_nr = cls._extract_major_version_nr(version)
         minor_nr = cls._extract_minor_version_nr(version)
-        if not major_nr.isdigit():
-            raise ValueError("Can't parse samtools version string")
-        if int(major_nr) < 1:
-            raise ValueError("You need to use at least samtools version 1.3.")
-        else:
-            minor_nr_1 = minor_nr.split('.', 1)[0]
-            if not minor_nr_1.isdigit():
-                raise ValueError("Can't parse samtools version string.")
-                return errors
-            if int(minor_nr_1[0]) < 3:
-                raise ValueError("You need to use at least samtools version 1.3.")
+        cls._check_major_version_nr(major_nr)
+        cls._check_minor_version_nr(minor_nr)
 
 
 class CompareStatsForFiles:

@@ -339,20 +339,20 @@ class TestHandleSamtoolsVersion(TestCase):
         expected = "2"
         self.assertEqual(result, expected)
 
-    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_version_output')
-    def test_check_samtools_version_wrong_vs_1_2(self, mock_version):
-        mock_version.return_value = 'samtools 1.2\nUsing htslib 1.2.1\nCopyright (C) 2015 Genome Research Ltd.'
-        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, mock_version)
+    def test_check_samtools_version_wrong_vs_1_2(self):
+        vs = 'samtools 1.2\nUsing htslib 1.2.1\nCopyright (C) 2015 Genome Research Ltd.'
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, vs)
 
-    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_version_output')
-    def test_check_samtools_version_wrong_vs_1_218(self, mock_version):
-        mock_version.return_value = "samtools 1.2-218-g00e55ad\nUsing htslib 1.2.1-218-g9f6fa0f\nCopyright (C) 2015 Genome Research Ltd.\n"
-        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, mock_version)
+    def test_check_samtools_version_wrong_vs_1_218(self):
+        vs = "samtools 1.2-218-g00e55ad\nUsing htslib 1.2.1-218-g9f6fa0f\nCopyright (C) 2015 Genome Research Ltd.\n"
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, vs)
 
-    @mock.patch('checks.stats_checks.RunSamtoolsCommands.get_samtools_version_output')
-    def test_check_samtools_version_no_vs(self, mock_version):
-        mock_version.return_value = None
-        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, mock_version)
+    def test_check_samtools_version_no_vs(self):
+        vs = None
+        self.assertRaises(ValueError, stats_checks.HandleSamtoolsVersion.check_samtools_version, vs)
+
+
+
 
     def test_check_samtools_version_ok_vs(self):
         vs = "samtools 1.3\nUsing htslib 1.3\nCopyright (C) 2015 Genome Research Ltd.\n"
