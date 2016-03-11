@@ -61,6 +61,9 @@ def check_path_writable(fpath):
                 return True
             return False
 
+def is_irods_path(path):
+    return path.startswith('irods:')
+
 
 def compare_mtimestamp(fpath1, fpath2):
     if not fpath2 or not fpath1:

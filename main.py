@@ -23,6 +23,7 @@ import sys
 import argparse
 import logging
 from checks.stats_checks import RunSamtoolsCommands, CompareStatsForFiles
+from checks import utils
 
 
 def parse_args():
@@ -45,11 +46,13 @@ def main():
         bam_path = args.b
         cram_path = args.c
 
-        if not os.path.isfile(bam_path):
+        if not utils.is_irods_path(bam_path) and not os.path.isfile(bam_path):
             logging.error("This is not a file path: %s" % bam_path)
+            #sys.exit(1)
             raise ValueError("This is not a file path: %s")
-        if not os.path.isfile(cram_path):
+        if not utils.is_irods_path(cram_path) and not os.path.isfile(cram_path):
             logging.error("This is not a file path: %s" % cram_path)
+            #sys.exit(1)
             raise ValueError("This is not a file path: %s")
 
         errors = CompareStatsForFiles.compare_bam_and_cram_by_statistics(bam_path, cram_path)

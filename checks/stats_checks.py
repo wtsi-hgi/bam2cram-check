@@ -180,18 +180,18 @@ class CompareStatsForFiles:
     def compare_bam_and_cram_by_statistics(cls, bam_path, cram_path):
         errors = []
         # Check that it's a valid file path
-        if not bam_path or not os.path.isfile(bam_path):
+        if not bam_path or (not utils.is_irods_path(bam_path) and not os.path.isfile(bam_path)):
             errors.append("The BAM file path: %s is not valid" % bam_path)
-        if not cram_path or not os.path.isfile(cram_path):
+        if not cram_path or (not utils.is_irods_path(cram_path) and not os.path.isfile(cram_path)):
             errors.append("The CRAM file path:%s is not valid" % cram_path)
         if errors:
             logging.error("There are errors with the file paths you provided: %s" % errors)
             return errors
 
         # Check that the files are readable by me
-        if not utils.can_read_file(bam_path):
+        if not utils.is_irods_path(bam_path) and not utils.can_read_file(bam_path):
             errors.append("Can't read file %s" % bam_path)
-        if not utils.can_read_file(cram_path):
+        if not utils.is_irods_path(cram_path) and not utils.can_read_file(cram_path):
             errors.append("Can't read file %s" % cram_path)
         if errors:
             logging.error("There are problems reading the files: %s" % errors)
@@ -257,14 +257,14 @@ class CompareStatsForFiles:
 
         # Persist stats:
         try:
-            if stats_b:
+            if stats_b and not utils.is_irods_path(bam_path):
                 HandleSamtoolsStats.persist_stats(stats_b, stats_fpath_b)
         except IOError as e:
             errors.append("Can't save stats to disk for %s file" % bam_path)
             logging.error("Can't save stats to disk for %s file" % bam_path)
 
         try:
-            if stats_c:
+            if stats_c and not utils.is_irods_path(cram_path):
                 HandleSamtoolsStats.persist_stats(stats_c, stats_fpath_c)
         except IOError as e:
             errors.append("Can't save stats to disk for %s file" % cram_path)
