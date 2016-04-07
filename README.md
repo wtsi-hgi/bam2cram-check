@@ -7,6 +7,7 @@ This package is for checking that the file format convertion between a BAM and a
 
 For running this you need:
 ```
+python >= 3.5
 samtools >=1.3
 ```
 
